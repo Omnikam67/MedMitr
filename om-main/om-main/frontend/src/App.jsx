@@ -4329,6 +4329,7 @@ function AdminView({ logout, t }) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [creatingProduct, setCreatingProduct] = useState(false);
+  const [showCreateProductForm, setShowCreateProductForm] = useState(false);
   const [newProductForm, setNewProductForm] = useState({
     product_id: "",
     product_name: "",
@@ -4596,6 +4597,7 @@ function AdminView({ logout, t }) {
           price: 0,
           prescription_required: false,
         });
+        setShowCreateProductForm(false);
         fetchProducts();
       } else {
         alert("❌ " + (res.data?.message || "Failed to create product"));
@@ -4661,7 +4663,7 @@ function AdminView({ logout, t }) {
           
           <div className="flex items-center gap-4">
             {activeTab === "inventory" && (
-              <>
+              <div className="flex flex-col items-end gap-2">
                 <input 
                   type="file" accept=".xlsx, .xls" ref={fileInputRef} 
                   style={{ display: "none" }} onChange={handleFileUpload}
@@ -4674,7 +4676,14 @@ function AdminView({ logout, t }) {
                   {uploading ? <Loader2 size={18} className="animate-spin" /> : <Package size={18} />}
                   {uploading ? tt("admin_uploading") : tt("admin_import_excel")}
                 </button>
-              </>
+                <button
+                  onClick={() => setShowCreateProductForm((prev) => !prev)}
+                  className="admin-btn flex items-center gap-2 px-5 py-2.5 bg-white text-teal-700 font-bold rounded-lg border border-teal-200 hover:bg-teal-50 transition shadow-sm"
+                >
+                  <PlusCircle size={18} />
+                  {showCreateProductForm ? "Hide Add Medicine" : "Add Medicine"}
+                </button>
+              </div>
             )}
             <button onClick={logout} className="admin-btn admin-btn-danger md:hidden p-2 text-red-500 bg-red-50 rounded-lg">
                Logout
@@ -4736,6 +4745,7 @@ function AdminView({ logout, t }) {
                 </div>
               )}
 
+              {showCreateProductForm && (
               <div className="admin-panel bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
                 <div className="flex items-center gap-3 mb-5">
                   <PlusCircle size={22} className="text-teal-600" />
@@ -4811,6 +4821,7 @@ function AdminView({ logout, t }) {
                   </button>
                 </form>
               </div>
+              )}
 
               {/* INVENTORY TABLE */}
               <div className="admin-panel bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col">
