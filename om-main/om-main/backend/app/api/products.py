@@ -86,6 +86,24 @@ class ProductUpdate(BaseModel):
     price: float | None = None
     prescription_required: bool | None = None
 
+
+class ProductCreate(BaseModel):
+    product_id: str | None = None
+    product_name: str
+    description: str | None = ""
+    stock: int = 0
+    price: float = 0
+    prescription_required: bool = False
+
+
+@router.post("/admin/products")
+@observe(name="create_admin_product")
+def create_product(data: ProductCreate):
+    success, message = service.create_product(data.model_dump())
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
+    return {"success": True, "message": message}
+
 @router.put("/admin/products/{product_id}")
 @observe(name="update_admin_product")
 def update_product(product_id: str, data: ProductUpdate):

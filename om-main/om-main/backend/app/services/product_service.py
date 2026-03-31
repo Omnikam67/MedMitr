@@ -173,6 +173,45 @@ class ProductService:
         finally:
             db.close()
 
+    def create_product(self, product_data: dict):
+        db = SessionLocal()
+        try:
+            product_name = str(product_data.get("product_name") or "").strip()
+            if not product_name:
+                return False, "Product name is required."
+
+            product_id = str(product_data.get("product_id") or "").strip() or str(uuid.uuid4())
+            existing = self._find_product(db, product_id=product_id, product_name=product_name)
+            if existing:
+                return False, "A product with this ID or name already exists."
+
+            description = str(product_data.get("description") or "").strip()
+            stock = int(product_data.get("stock") or 0)
+            price = float(product_data.get("price") or 0)
+            prescription_required = bool(product_data.get("prescription_required", False))
+
+            db.add(
+                Product(
+                    product_id=product_id,
+                    product_name=product_name,
+                    description=description,
+                    stock=stock,
+                    price=price,
+                    prescription_required=prescription_required,
+                )
+            )
+            db.commit()
+            self.reload()
+            indexed, index_error = self._sync_vector_index()
+            if indexed:
+                return True, "Product created successfully."
+            return True, f"Product created successfully. Search indexing skipped: {index_error}"
+        except Exception as e:
+            db.rollback()
+            return False, f"Error creating product: {str(e)}"
+        finally:
+            db.close()
+
     @observe(name="get_product_by_name")
     def get_product_by_name(self, name: str):
         if not name:
