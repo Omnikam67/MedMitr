@@ -4328,6 +4328,15 @@ function AdminView({ logout, t }) {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [creatingProduct, setCreatingProduct] = useState(false);
+  const [newProductForm, setNewProductForm] = useState({
+    product_id: "",
+    product_name: "",
+    description: "",
+    stock: 0,
+    price: 0,
+    prescription_required: false,
+  });
 
   // Orders States
   const [orders, setOrders] = useState([]);
@@ -4558,6 +4567,46 @@ function AdminView({ logout, t }) {
     }
   };
 
+  const handleCreateProduct = async (e) => {
+    e.preventDefault();
+    if (!newProductForm.product_name.trim()) {
+      alert("Product name is required.");
+      return;
+    }
+
+    setCreatingProduct(true);
+    try {
+      const payload = {
+        ...newProductForm,
+        product_id: newProductForm.product_id.trim() || undefined,
+        product_name: newProductForm.product_name.trim(),
+        description: newProductForm.description.trim(),
+        stock: Number(newProductForm.stock) || 0,
+        price: Number(newProductForm.price) || 0,
+      };
+
+      const res = await axios.post(`${API_BASE}/admin/products`, payload);
+      if (res.data?.success) {
+        alert("✅ " + res.data.message);
+        setNewProductForm({
+          product_id: "",
+          product_name: "",
+          description: "",
+          stock: 0,
+          price: 0,
+          prescription_required: false,
+        });
+        fetchProducts();
+      } else {
+        alert("❌ " + (res.data?.message || "Failed to create product"));
+      }
+    } catch (err) {
+      alert("❌ Failed to create product: " + (err.response?.data?.detail || err.message));
+    } finally {
+      setCreatingProduct(false);
+    }
+  };
+
   const lowStockCount = products.filter(p => p.stock < 10).length;
 
   return (
@@ -4686,6 +4735,82 @@ function AdminView({ logout, t }) {
                   </div>
                 </div>
               )}
+
+              <div className="admin-panel bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+                <div className="flex items-center gap-3 mb-5">
+                  <PlusCircle size={22} className="text-teal-600" />
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800">Add Medicine</h3>
+                    <p className="text-sm text-gray-500">Create a medicine manually if Excel upload is not working.</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleCreateProduct} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      value={newProductForm.product_id}
+                      onChange={(e) => setNewProductForm({ ...newProductForm, product_id: e.target.value })}
+                      placeholder="Product ID optional"
+                      className="admin-input w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                    />
+                    <input
+                      type="text"
+                      value={newProductForm.product_name}
+                      onChange={(e) => setNewProductForm({ ...newProductForm, product_name: e.target.value })}
+                      placeholder="Product name"
+                      className="admin-input w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                    />
+                  </div>
+
+                  <textarea
+                    value={newProductForm.description}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, description: e.target.value })}
+                    placeholder="Description"
+                    rows={3}
+                    className="admin-input w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition resize-none"
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="number"
+                      min="0"
+                      value={newProductForm.stock}
+                      onChange={(e) => setNewProductForm({ ...newProductForm, stock: e.target.value })}
+                      placeholder="Stock"
+                      className="admin-input w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={newProductForm.price}
+                      onChange={(e) => setNewProductForm({ ...newProductForm, price: e.target.value })}
+                      placeholder="Price"
+                      className="admin-input w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200 w-fit">
+                    <input
+                      type="checkbox"
+                      checked={newProductForm.prescription_required}
+                      onChange={(e) => setNewProductForm({ ...newProductForm, prescription_required: e.target.checked })}
+                      className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500 cursor-pointer"
+                    />
+                    <span className="font-medium text-gray-700">Prescription Required</span>
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={creatingProduct}
+                    className="admin-btn admin-btn-primary inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white font-bold rounded-lg hover:bg-teal-700 transition shadow-md disabled:opacity-50"
+                  >
+                    {creatingProduct ? <Loader2 size={18} className="animate-spin" /> : <PlusCircle size={18} />}
+                    {creatingProduct ? "Adding..." : "Add Medicine"}
+                  </button>
+                </form>
+              </div>
 
               {/* INVENTORY TABLE */}
               <div className="admin-panel bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col">
