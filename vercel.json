@@ -1,8 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "cd om-main/om-main/frontend && npm install",
-  "buildCommand": "cd om-main/om-main/frontend && npm run build",
-  "outputDirectory": "om-main/om-main/frontend/dist",
   "rewrites": [
     {
       "source": "/(.*)",
