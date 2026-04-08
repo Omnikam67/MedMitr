@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import { io } from "socket.io-client";
@@ -4557,7 +4557,7 @@ function AdminView({ logout, t }) {
     }
   };
 
-  const performLogout = () => {
+  function performLogout() {
     clearAuthToken();
     setRole(null);
     setUser(null);
