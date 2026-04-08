@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from langfuse import observe
-from app.services.product_service import ProductService
 from pydantic import BaseModel
-from app.services.translation_service import translate_texts, simplify_english
+
+from app.core.auth import require_roles
+from app.services.product_service import ProductService
+from app.services.translation_service import simplify_english, translate_texts
 
 router = APIRouter()
 service = ProductService()
@@ -11,7 +13,6 @@ service = ProductService()
 @router.get("/products")
 @observe(name="get_all_products")
 def get_products(english: bool = True):
-    # reload data so that recent orders/stock changes from other service instances are reflected
     service.reload()
     products = service.get_all_products()
 
@@ -24,6 +25,7 @@ def get_products(english: bool = True):
 
     return products
 
+
 @router.get("/products/{product_name}")
 @observe(name="get_product_by_name")
 def get_product(product_name: str):
@@ -35,9 +37,7 @@ def get_product(product_name: str):
 
 @router.get("/admin/products")
 @observe(name="get_admin_products")
-def get_admin_products():
-    """Return complete product list for admins with translation and analysis."""
-    # ensure we have the latest values from disk
+def get_admin_products(_: dict = Depends(require_roles("admin", "system_manager"))):
     service.reload()
     df = service.df
     products = []
@@ -67,8 +67,10 @@ def get_admin_products():
 
 
 @router.post("/admin/products/upload")
-async def upload_products(file: UploadFile = File(...)):
-    """Receive an Excel file from the admin UI and update inventory."""
+async def upload_products(
+    file: UploadFile = File(...),
+    _: dict = Depends(require_roles("admin", "system_manager")),
+):
     if not file:
         raise HTTPException(status_code=400, detail="No file provided")
 
@@ -77,8 +79,9 @@ async def upload_products(file: UploadFile = File(...)):
         message = service.update_inventory_from_excel(content)
         success = message.lower().startswith("success")
         return {"success": success, "message": message}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to process file: {str(e)}")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to process file: {str(exc)}") from exc
+
 
 class ProductUpdate(BaseModel):
     product_name: str | None = None
@@ -98,15 +101,20 @@ class ProductCreate(BaseModel):
 
 @router.post("/admin/products")
 @observe(name="create_admin_product")
-def create_product(data: ProductCreate):
+def create_product(data: ProductCreate, _: dict = Depends(require_roles("admin", "system_manager"))):
     success, message = service.create_product(data.model_dump())
     if not success:
         raise HTTPException(status_code=400, detail=message)
     return {"success": True, "message": message}
 
+
 @router.put("/admin/products/{product_id}")
 @observe(name="update_admin_product")
-def update_product(product_id: str, data: ProductUpdate):
+def update_product(
+    product_id: str,
+    data: ProductUpdate,
+    _: dict = Depends(require_roles("admin", "system_manager")),
+):
     success, message = service.update_product_details(product_id, data.model_dump(exclude_unset=True))
     if not success:
         raise HTTPException(status_code=400, detail=message)

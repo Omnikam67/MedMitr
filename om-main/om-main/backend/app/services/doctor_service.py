@@ -518,7 +518,11 @@ class DoctorService:
         }
 
     @staticmethod
-    def _get_feedback_summary_for_doctor(db: Session, doctor_id: str) -> Dict:
+    def _get_feedback_summary_for_doctor(
+        db: Session,
+        doctor_id: str,
+        viewer_user_id: Optional[str] = None,
+    ) -> Dict:
         reviews = db.query(DoctorFeedbackTable).filter(
             DoctorFeedbackTable.doctor_id == doctor_id,
             DoctorFeedbackTable.is_visible == True,
@@ -530,12 +534,32 @@ class DoctorService:
             stars: len([item for item in reviews if item.rating == stars])
             for stars in range(5, 0, -1)
         }
+        trusted_phone_set = UserService.get_trusted_contact_phone_set(viewer_user_id)
+        trusted_reviews = [
+            item
+            for item in reviews
+            if DoctorService._normalize_phone(item.patient_phone) in trusted_phone_set
+        ]
+        trusted_review_count = len(trusted_reviews)
+        trusted_average_rating = round(
+            sum(item.rating for item in trusted_reviews) / trusted_review_count,
+            1,
+        ) if trusted_review_count else 0.0
+        trusted_recommendation_rate = round(
+            (sum(item.rating for item in trusted_reviews) / (trusted_review_count * 5)) * 100,
+            1,
+        ) if trusted_review_count else 0.0
+        trust_signal = "trusted_circle" if trusted_review_count else ("verified_reviews" if count else "new")
         return {
             "doctor_id": doctor_id,
             "average_rating": average_rating,
             "review_count": count,
             "recommendation_rate": recommendation_rate,
             "rating_breakdown": rating_breakdown,
+            "trusted_review_count": trusted_review_count,
+            "trusted_average_rating": trusted_average_rating,
+            "trusted_recommendation_rate": trusted_recommendation_rate,
+            "trust_signal": trust_signal,
         }
 
     @staticmethod
@@ -1600,7 +1624,7 @@ class DoctorService:
             db.close()
 
     @staticmethod
-    def get_doctor_feedback_summary(doctor_id: str) -> Dict:
+    def get_doctor_feedback_summary(doctor_id: str, viewer_user_id: Optional[str] = None) -> Dict:
         db = SessionLocal()
         try:
             doctor = DoctorService._get_doctor_by_identifier(db, doctor_id)
@@ -1611,8 +1635,12 @@ class DoctorService:
                     "review_count": 0,
                     "recommendation_rate": 0.0,
                     "rating_breakdown": {stars: 0 for stars in range(5, 0, -1)},
+                    "trusted_review_count": 0,
+                    "trusted_average_rating": 0.0,
+                    "trusted_recommendation_rate": 0.0,
+                    "trust_signal": "new",
                 }
-            return DoctorService._get_feedback_summary_for_doctor(db, doctor.id)
+            return DoctorService._get_feedback_summary_for_doctor(db, doctor.id, viewer_user_id=viewer_user_id)
         finally:
             db.close()
     

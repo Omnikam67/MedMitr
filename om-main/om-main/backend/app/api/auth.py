@@ -1,26 +1,41 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
-from typing import Optional
 import os
+from typing import Optional
+
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
+
+from app.core.auth import get_current_auth_payload, require_roles, require_subject_match
+from app.core.security import create_access_token
 from app.models.user import (
-    UserRegister,
-    UserLogin,
     AuthResponse,
     ForgotPasswordRequest,
+    ManagerActionRequest,
     PharmacistSignupRequest,
     ResetPasswordRequest,
     SystemManagerLoginRequest,
-    ManagerActionRequest,
+    UserLogin,
+    UserRegister,
 )
 from app.services.user_service import UserService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+
+def _build_access_token(user: dict) -> str:
+    return create_access_token(
+        {
+            "sub": user.get("id"),
+            "role": user.get("role"),
+            "phone": user.get("phone"),
+            "shop_id": user.get("shop_id"),
+            "pharma_id": user.get("pharma_id"),
+            "name": user.get("name"),
+        }
+    )
+
+
 @router.post("/register", response_model=AuthResponse)
 async def register(request: UserRegister):
-    """Register a new user (phone-based for regular users, shop_id-based for admins)"""
-    
-    # Determine role based on what was provided
     if request.phone:
         role = "user"
         result = UserService.register_user(
@@ -30,7 +45,7 @@ async def register(request: UserRegister):
             password=request.password,
             age=request.age,
             role=role,
-            preferred_language=request.preferred_language
+            preferred_language=request.preferred_language,
         )
     elif request.shop_id:
         role = "admin"
@@ -41,60 +56,51 @@ async def register(request: UserRegister):
             password=request.password,
             age=None,
             role=role,
-            preferred_language=request.preferred_language
+            preferred_language=request.preferred_language,
         )
     else:
-        return AuthResponse(
-            success=False,
-            message="Either phone or shop_id is required"
-        )
-    
+        return AuthResponse(success=False, message="Either phone or shop_id is required")
+
     if result["success"]:
         return AuthResponse(
             success=True,
             message=result["message"],
             user=result["user"],
-            session_id=result["user"]["id"]
+            session_id=result["user"]["id"],
+            access_token=_build_access_token(result["user"]),
         )
-    else:
-        return AuthResponse(success=False, message=result["message"])
+    return AuthResponse(success=False, message=result["message"])
+
 
 @router.post("/login", response_model=AuthResponse)
 async def login(request: UserLogin):
-    """Login a user using phone/shop_id and password"""
-    
     if request.phone:
-        role = "user"
         result = UserService.login_user(
             phone=request.phone,
             shop_id=None,
             password=request.password,
-            role=role
+            role="user",
         )
     elif request.shop_id or request.pharma_id:
-        role = "admin"
         result = UserService.login_user(
             phone=None,
             shop_id=request.shop_id or request.pharma_id,
             password=request.password,
-            role=role,
-            pharma_id=request.pharma_id
+            role="admin",
+            pharma_id=request.pharma_id,
         )
     else:
-        return AuthResponse(
-            success=False,
-            message="Either phone or shop_id is required"
-        )
-    
+        return AuthResponse(success=False, message="Either phone or shop_id is required")
+
     if result["success"]:
         return AuthResponse(
             success=True,
             message=result["message"],
             user=result["user"],
-            session_id=result["user"]["id"]
+            session_id=result["user"]["id"],
+            access_token=_build_access_token(result["user"]),
         )
-    else:
-        return AuthResponse(success=False, message=result["message"])
+    return AuthResponse(success=False, message=result["message"])
 
 
 @router.post("/forgot-password/request")
@@ -126,12 +132,13 @@ class TrustedContactsImportRequest(BaseModel):
 
 
 @router.post("/profile", response_model=AuthResponse)
-async def update_profile(request: ProfileUpdate):
+async def update_profile(request: ProfileUpdate, auth: dict = Depends(get_current_auth_payload)):
+    require_subject_match(request.user_id, auth, allow_roles=("admin", "system_manager"))
     updated = UserService.update_profile(
         user_id=request.user_id,
         name=request.name,
         phone=request.phone,
-        preferred_language=request.preferred_language
+        preferred_language=request.preferred_language,
     )
     if not updated:
         return AuthResponse(success=False, message="User not found")
@@ -139,12 +146,17 @@ async def update_profile(request: ProfileUpdate):
         success=True,
         message="Profile updated",
         user=updated,
-        session_id=updated.get("id")
+        session_id=updated.get("id"),
+        access_token=_build_access_token(updated),
     )
 
 
 @router.post("/contacts/import")
-async def import_trusted_contacts(request: TrustedContactsImportRequest):
+async def import_trusted_contacts(
+    request: TrustedContactsImportRequest,
+    auth: dict = Depends(get_current_auth_payload),
+):
+    require_subject_match(request.user_id, auth)
     return UserService.import_trusted_contacts(
         user_id=request.user_id,
         contacts=request.contacts,
@@ -152,12 +164,14 @@ async def import_trusted_contacts(request: TrustedContactsImportRequest):
 
 
 @router.get("/contacts/status/{user_id}")
-async def get_trusted_contacts_status(user_id: str):
+async def get_trusted_contacts_status(user_id: str, auth: dict = Depends(get_current_auth_payload)):
+    require_subject_match(user_id, auth, allow_roles=("system_manager",))
     return UserService.get_trusted_contact_status(user_id)
 
 
 @router.get("/contacts/{user_id}")
-async def get_trusted_contacts(user_id: str):
+async def get_trusted_contacts(user_id: str, auth: dict = Depends(get_current_auth_payload)):
+    require_subject_match(user_id, auth, allow_roles=("system_manager",))
     return UserService.get_trusted_contacts(user_id)
 
 
@@ -212,32 +226,46 @@ async def system_manager_login(request: SystemManagerLoginRequest):
         message="System Manager login successful",
         user=user,
         session_id=user["id"],
+        access_token=create_access_token(
+            {
+                "sub": user["id"],
+                "role": "system_manager",
+                "manager_id": request.manager_id,
+                "name": user["name"],
+            }
+        ),
     )
 
 
 @router.post("/system-manager/pharmacist-requests")
-async def list_pharmacist_requests(request: ManagerActionRequest):
-    if not _validate_system_manager(request.manager_id, request.password):
-        return {"success": False, "message": "Unauthorized"}
+async def list_pharmacist_requests(
+    request: ManagerActionRequest,
+    _: dict = Depends(require_roles("system_manager")),
+):
     return {"success": True, "requests": UserService.list_pharmacist_requests()}
 
 
 @router.post("/system-manager/pharmacist-history")
-async def list_pharmacist_history(request: ManagerActionRequest):
-    if not _validate_system_manager(request.manager_id, request.password):
-        return {"success": False, "message": "Unauthorized"}
+async def list_pharmacist_history(
+    request: ManagerActionRequest,
+    _: dict = Depends(require_roles("system_manager")),
+):
     return {"success": True, "requests": UserService.list_pharmacist_request_history()}
 
 
 @router.post("/system-manager/pharmacist-requests/{request_id}/approve")
-async def approve_pharmacist_request(request_id: str, request: ManagerActionRequest):
-    if not _validate_system_manager(request.manager_id, request.password):
-        return {"success": False, "message": "Unauthorized"}
+async def approve_pharmacist_request(
+    request_id: str,
+    request: ManagerActionRequest,
+    _: dict = Depends(require_roles("system_manager")),
+):
     return UserService.approve_pharmacist_request(request_id)
 
 
 @router.post("/system-manager/pharmacist-requests/{request_id}/reject")
-async def reject_pharmacist_request(request_id: str, request: ManagerActionRequest):
-    if not _validate_system_manager(request.manager_id, request.password):
-        return {"success": False, "message": "Unauthorized"}
+async def reject_pharmacist_request(
+    request_id: str,
+    request: ManagerActionRequest,
+    _: dict = Depends(require_roles("system_manager")),
+):
     return UserService.reject_pharmacist_request(request_id)

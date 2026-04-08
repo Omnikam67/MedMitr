@@ -49,6 +49,8 @@ class AuthResponse(BaseModel):
     message: str
     user: Optional[UserResponse] = None
     session_id: Optional[str] = None
+    access_token: Optional[str] = None
+    token_type: Optional[str] = "bearer"
 
 
 class PharmacistSignupRequest(BaseModel):
@@ -70,4 +72,4 @@ class SystemManagerLoginRequest(BaseModel):
 
 class ManagerActionRequest(BaseModel):
     manager_id: str
-    password: str
+    password: Optional[str] = None

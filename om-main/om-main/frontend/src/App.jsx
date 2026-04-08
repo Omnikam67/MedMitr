@@ -23,6 +23,7 @@ import { SystemManagerRequestHistory } from "./components/SystemManagerRequestHi
 import { DeliveryBoyDashboard } from "./components/DeliveryBoyDashboard";
 import LoginPage from "./pages/LoginPage";
 import { API_BASE, SOCKET_URL } from "./config/api";
+import { clearAuthToken, initializeAuthToken, setAuthToken } from "./config/auth";
 const DEFAULT_PROJECT_LOCATION = {
   lat: 20.7935,
   lng: 76.7005,
@@ -582,6 +583,9 @@ function LoginForm({ onLogin, onBookAppointment }) {
             password: loginData.password
           });
           if (res.data.success) {
+            if (res.data.access_token) {
+              setAuthToken(res.data.access_token);
+            }
             onLogin("doctor", res.data.doctor, res.data.doctor.id);
           } else {
             setError(res.data.message || "Doctor login failed");
@@ -603,12 +607,14 @@ function LoginForm({ onLogin, onBookAppointment }) {
           password: loginData.password,
         });
         if (res.data.success) {
+          if (res.data.access_token) {
+            setAuthToken(res.data.access_token);
+          }
           onLogin(
             "system_manager",
             {
               ...res.data.user,
               manager_id: loginData.managerId,
-              manager_password: loginData.password,
             },
             res.data.session_id
           );
@@ -660,6 +666,9 @@ function LoginForm({ onLogin, onBookAppointment }) {
             age: loginData.age ? parseInt(loginData.age, 10) : null,
           });
           if (res.data.success) {
+            if (res.data.access_token) {
+              setAuthToken(res.data.access_token);
+            }
             onLogin("user", res.data.user, res.data.session_id);
           } else {
             setError(res.data.message || "Registration failed");
@@ -691,6 +700,9 @@ function LoginForm({ onLogin, onBookAppointment }) {
       });
 
       if (res.data.success) {
+        if (res.data.access_token) {
+          setAuthToken(res.data.access_token);
+        }
         onLogin(loginRole, res.data.user, res.data.session_id);
       } else {
         setError(res.data.message || "Login failed");
@@ -900,7 +912,7 @@ function LoginForm({ onLogin, onBookAppointment }) {
   );
 }
 
-function SystemManagerView({ managerId, managerPassword, onLogout, onOpenDoctorApprovals, onOpenHistory }) {
+function SystemManagerView({ managerId, onLogout, onOpenDoctorApprovals, onOpenHistory }) {
   const [requests, setRequests] = useState([]);
   const [deliveryRequests, setDeliveryRequests] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -921,7 +933,6 @@ function SystemManagerView({ managerId, managerPassword, onLogout, onOpenDoctorA
     try {
       const res = await axios.post(`${API_BASE}/auth/system-manager/pharmacist-requests`, {
         manager_id: managerId,
-        password: managerPassword,
       });
       if (res.data?.success) {
         setRequests(res.data.requests || []);
@@ -941,7 +952,6 @@ function SystemManagerView({ managerId, managerPassword, onLogout, onOpenDoctorA
     try {
       const res = await axios.post(`${API_BASE}/delivery/manager/pending`, {
         manager_id: managerId,
-        password: managerPassword,
       });
       if (res.data?.success) {
         setDeliveryRequests(res.data.requests || []);
@@ -960,9 +970,9 @@ function SystemManagerView({ managerId, managerPassword, onLogout, onOpenDoctorA
   };
 
   useEffect(() => {
-    if (!managerId || !managerPassword) return;
+    if (!managerId) return;
     refreshAll();
-  }, [managerId, managerPassword]);
+  }, [managerId]);
 
   const handlePharmacistAction = async (requestId, action) => {
     setActionLoadingId(`pharmacy-${requestId}`);
@@ -972,7 +982,6 @@ function SystemManagerView({ managerId, managerPassword, onLogout, onOpenDoctorA
         `${API_BASE}/auth/system-manager/pharmacist-requests/${requestId}/${action}`,
         {
           manager_id: managerId,
-          password: managerPassword,
         }
       );
       if (!res.data?.success) {
@@ -994,7 +1003,6 @@ function SystemManagerView({ managerId, managerPassword, onLogout, onOpenDoctorA
       const res = await axios.post(`${API_BASE}/delivery/manager/approve`, {
         delivery_boy_id: deliveryBoyId,
         manager_id: managerId,
-        manager_password: managerPassword,
         approved,
         reason: reason.trim() || null,
       });
@@ -1207,6 +1215,9 @@ function SystemManagerView({ managerId, managerPassword, onLogout, onOpenDoctorA
 
 function App() {
   // ⚠️ ALL HOOKS MUST BE CALLED HERE IN SAME ORDER EVERY RENDER
+  useEffect(() => {
+    initializeAuthToken();
+  }, []);
   
   // Login / Role State
   const [role, setRole] = useState(null);
@@ -2314,6 +2325,9 @@ const applyChatResponse = (data, languageCode) => {
       newPassword: ""
     });
     setPreferredLanguage(userData?.preferred_language || "en");
+    if (userData?.access_token) {
+      setAuthToken(userData.access_token);
+    }
     if (selectedRole === "system_manager") {
       setView("manager");
     } else if (selectedRole === "delivery_boy") {
@@ -2385,17 +2399,12 @@ const applyChatResponse = (data, languageCode) => {
       );
     }
     return (
-      <DoctorDashboard
-        doctorId={user?.id || sessionId}
-        doctorName={user?.name || "Doctor"}
-        onOpenRevenue={() => setView("doctor_revenue")}
-        onLogout={() => {
-          setRole(null);
-          setUser(null);
-          setSessionId(null);
-          setView("dashboard");
-        }}
-      />
+        <DoctorDashboard
+          doctorId={user?.id || sessionId}
+          doctorName={user?.name || "Doctor"}
+          onOpenRevenue={() => setView("doctor_revenue")}
+        onLogout={performLogout}
+        />
     );
   }
 
@@ -2404,14 +2413,8 @@ const applyChatResponse = (data, languageCode) => {
       return (
         <SystemManagerDoctorApprovals
           managerId={user?.manager_id || user?.shop_id || "sysmanager"}
-          managerPassword={user?.manager_password}
           onBack={() => setView("manager")}
-          onLogout={() => {
-            setRole(null);
-            setUser(null);
-            setSessionId(null);
-            setView("dashboard");
-          }}
+          onLogout={performLogout}
         />
       );
     }
@@ -2419,29 +2422,17 @@ const applyChatResponse = (data, languageCode) => {
       return (
         <SystemManagerRequestHistory
           managerId={user?.manager_id || user?.shop_id || "sysmanager"}
-          managerPassword={user?.manager_password}
           onBack={() => setView("manager")}
-          onLogout={() => {
-            setRole(null);
-            setUser(null);
-            setSessionId(null);
-            setView("dashboard");
-          }}
+          onLogout={performLogout}
         />
       );
     }
     return (
       <SystemManagerView
         managerId={user?.manager_id || user?.shop_id}
-        managerPassword={user?.manager_password}
         onOpenDoctorApprovals={() => setView("doctor_approvals")}
         onOpenHistory={() => setView("manager_history")}
-        onLogout={() => {
-          setRole(null);
-          setUser(null);
-          setSessionId(null);
-          setView("dashboard");
-        }}
+        onLogout={performLogout}
       />
     );
   }
@@ -2450,19 +2441,14 @@ const applyChatResponse = (data, languageCode) => {
     return (
       <DeliveryBoyDashboard
         deliveryBoy={user}
-        onLogout={() => {
-          setRole(null);
-          setUser(null);
-          setSessionId(null);
-          setView("dashboard");
-        }}
+        onLogout={performLogout}
       />
     );
   }
 
   // if signed in as admin, render admin dashboard
   if (role === "admin") {
-    return <AdminView logout={() => { setRole(null); setUser(null); setSessionId(null); }} t={t} />;
+    return <AdminView logout={performLogout} t={t} />;
   }
 
   if (role === "user" && view === "book_appointment") {
@@ -2586,7 +2572,7 @@ const applyChatResponse = (data, languageCode) => {
                     {profileSaving ? "Saving..." : t("save")}
                   </button>
                   <button
-                    onClick={() => { setRole(null); setUser(null); setSessionId(null); setView("dashboard"); }}
+                    onClick={performLogout}
                     className="rounded-2xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700"
                   >
                     {t("logout")}
@@ -2672,6 +2658,9 @@ const applyChatResponse = (data, languageCode) => {
         preferred_language: preferredLanguage
       });
       if (res.data?.success) {
+        if (res.data?.access_token) {
+          setAuthToken(res.data.access_token);
+        }
         setUser(res.data.user);
         setPreferredLanguage(res.data.user?.preferred_language || preferredLanguage);
         setProfileSuccess("Profile updated successfully");
@@ -4238,7 +4227,7 @@ const applyChatResponse = (data, languageCode) => {
               <div className="flex gap-3 pt-4">
                 <button onClick={() => setShowProfileModal(false)} className={`flex-1 px-4 py-2 rounded-xl ${isDarkMode ? "bg-slate-700 text-slate-100 hover:bg-slate-600" : "bg-gray-200 hover:bg-gray-300 text-slate-900"}`}>{t("close")}</button>
                 <button onClick={handleProfileSave} disabled={profileSaving} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-60">{profileSaving ? "Saving..." : t("save")}</button>
-                <button onClick={() => {setRole(null); setUser(null); setSessionId(null); setShowProfileModal(false);}} className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700">{t("logout")}</button>
+                <button onClick={() => { setShowProfileModal(false); performLogout(); }} className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700">{t("logout")}</button>
               </div>
             </div>
           </div>
@@ -4566,6 +4555,14 @@ function AdminView({ logout, t }) {
     } finally {
       setSavingAction(false);
     }
+  };
+
+  const performLogout = () => {
+    clearAuthToken();
+    setRole(null);
+    setUser(null);
+    setSessionId(null);
+    setView("dashboard");
   };
 
   const handleCreateProduct = async (e) => {

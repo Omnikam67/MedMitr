@@ -3,6 +3,7 @@ import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle, Upload, Users 
 import axios from "axios";
 import "../styles/LoginPage.css";
 import { API_BASE } from "../config/api";
+import { setAuthToken } from "../config/auth";
 const SYSTEM_MANAGER_ID = import.meta.env.VITE_SYSTEM_MANAGER_ID || "sysmanager";
 
 export default function LoginPage({ onLogin }) {
@@ -511,12 +512,14 @@ export default function LoginPage({ onLogin }) {
         }
         setTimeout(() => {
           const loggedInUser = response.data.user || response.data.doctor || response.data.system_manager || response.data.delivery_boy;
+          if (response.data.access_token) {
+            setAuthToken(response.data.access_token);
+          }
           const finalUser =
             userRole === "system_manager"
               ? {
                   ...loggedInUser,
                   manager_id: formData.managerId,
-                  manager_password: formData.password,
                 }
               : loggedInUser;
 
@@ -613,6 +616,9 @@ export default function LoginPage({ onLogin }) {
       const response = await axios.post(endpoint, payload);
 
       if (response.data.success) {
+        if (response.data.access_token) {
+          setAuthToken(response.data.access_token);
+        }
         setSuccess(userRole === "admin" 
           ? "✓ Registration request submitted! Waiting for approval."
           : userRole === "doctor"

@@ -602,10 +602,13 @@ class ExecutionAgent:
             notification_error = str(e)
 
         # 8ï¸âƒ£ Return Response to Decision Agent
+        safe_order = dict(order or {})
+        safe_order.pop("otp_code", None)
+
         return {
             "approved": True,
             "message": f"Order placed successfully!",
-            "order": order,
+            "order": safe_order,
             "remaining_stock": rem_stock,
             "notification_sent": notification_sent,
             "notification_phone": notification_phone if notification_sent else None,

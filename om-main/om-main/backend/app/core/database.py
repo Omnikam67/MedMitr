@@ -26,9 +26,20 @@ DEFAULT_DATABASE_URL = (
 )
 
 # Prefer a single DATABASE_URL in hosted environments like Render.
-CONFIGURED_DATABASE_URL = os.getenv("DATABASE_URL") or DEFAULT_DATABASE_URL
+RENDER_ENV = bool(os.getenv("RENDER"))
+DATABASE_URL_ENV = (os.getenv("DATABASE_URL") or "").strip()
 SQLITE_DB_PATH = Path(__file__).parent.parent.parent / "local_dev.db"
 SQLITE_DATABASE_URL = f"sqlite:///{SQLITE_DB_PATH.as_posix()}"
+
+if DATABASE_URL_ENV:
+    CONFIGURED_DATABASE_URL = DATABASE_URL_ENV
+elif RENDER_ENV:
+    # On Render, avoid blocking startup by trying localhost MySQL unless it is
+    # explicitly configured. Falling back to SQLite lets the web process bind
+    # to PORT quickly and serve traffic.
+    CONFIGURED_DATABASE_URL = SQLITE_DATABASE_URL
+else:
+    CONFIGURED_DATABASE_URL = DEFAULT_DATABASE_URL
 
 
 def _build_engine(database_url: str):
@@ -46,6 +57,7 @@ def _build_engine(database_url: str):
         max_overflow=20,
         pool_pre_ping=True,
         pool_recycle=3600,
+        connect_args={"connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "5"))},
     )
 
 

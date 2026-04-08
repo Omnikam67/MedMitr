@@ -159,6 +159,8 @@ class DeliveryService:
             order = db.query(Order).filter(Order.id == order_id).first()
             if not order:
                 return {"success": False, "message": "Order not found"}
+            if order.delivery_boy_id and str(order.delivery_boy_id) != str(delivery_boy_id):
+                return {"success": False, "message": "Order is assigned to another delivery partner"}
             if str(order.status).lower() == "cancelled":
                 return {"success": False, "message": "Cancelled order cannot be completed"}
             expected_otp = str(order.otp_code or "").strip()
@@ -199,6 +201,8 @@ class DeliveryService:
             order = db.query(Order).filter(Order.id == order_id).first()
             if not order:
                 return {"success": False, "message": "Order not found"}
+            if order.delivery_boy_id and str(order.delivery_boy_id) != str(delivery_boy_id):
+                return {"success": False, "message": "Order is assigned to another delivery partner"}
             if str(order.status).lower() == "completed":
                 return {"success": False, "message": "Completed order cannot be cancelled"}
             if str(order.status).lower() == "cancelled":
@@ -268,7 +272,6 @@ class DeliveryService:
             "delivery_location": order.delivery_location,
             "delivery_map_url": order.delivery_map_url,
             "status": order.status,
-            "otp_code": order.otp_code if str(order.status).lower() == "pending" else None,
             "delivery_cancel_reason": order.delivery_cancel_reason,
             "handled_by_me": str(order.delivery_boy_id or "") == str(delivery_boy_id),
             "date": order.order_date.isoformat() if order.order_date else None,

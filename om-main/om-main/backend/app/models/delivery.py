@@ -18,7 +18,7 @@ class DeliveryBoyLoginRequest(BaseModel):
 class DeliveryBoyApprovalRequest(BaseModel):
     delivery_boy_id: str
     manager_id: str
-    manager_password: str
+    manager_password: Optional[str] = None
     approved: bool
     reason: Optional[str] = None
 
@@ -27,4 +27,3 @@ class DeliveryBoyActionRequest(BaseModel):
     delivery_boy_id: str
     otp: Optional[str] = None
     reason: Optional[str] = None
-

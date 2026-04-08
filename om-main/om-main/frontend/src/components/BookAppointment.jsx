@@ -48,7 +48,14 @@ export function BookAppointment({ onBack, currentUser }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [doctorSearch, setDoctorSearch] = useState('');
-  const [doctorProfile, setDoctorProfile] = useState({ open: false, doctor: null, reviews: [], trustedReviewCount: 0, loading: false });
+  const [doctorProfile, setDoctorProfile] = useState({
+    open: false,
+    doctor: null,
+    reviews: [],
+    trustedReviewCount: 0,
+    summary: null,
+    loading: false,
+  });
   const [feedbackModal, setFeedbackModal] = useState({
     open: false,
     appointment: null,
@@ -237,16 +244,19 @@ export function BookAppointment({ onBack, currentUser }) {
   };
 
   const openDoctorProfile = async (doctor) => {
-    setDoctorProfile({ open: true, doctor, reviews: [], trustedReviewCount: 0, loading: true });
+    setDoctorProfile({ open: true, doctor, reviews: [], trustedReviewCount: 0, summary: null, loading: true });
     try {
-      const res = await axios.get(`${API_BASE}/doctor/feedback/doctor/${doctor.id}`, {
-        params: currentUser?.id ? { viewer_user_id: currentUser.id } : {},
-      });
+      const params = currentUser?.id ? { viewer_user_id: currentUser.id } : {};
+      const [reviewsRes, summaryRes] = await Promise.all([
+        axios.get(`${API_BASE}/doctor/feedback/doctor/${doctor.id}`, { params }),
+        axios.get(`${API_BASE}/doctor/feedback/summary/${doctor.id}`, { params }),
+      ]);
       setDoctorProfile({
         open: true,
         doctor,
-        reviews: res.data.reviews || [],
-        trustedReviewCount: res.data.trusted_review_count || 0,
+        reviews: reviewsRes.data.reviews || [],
+        trustedReviewCount: reviewsRes.data.trusted_review_count || 0,
+        summary: summaryRes.data.summary || null,
         loading: false,
       });
     } catch (err) {
@@ -256,6 +266,7 @@ export function BookAppointment({ onBack, currentUser }) {
         doctor,
         reviews: [],
         trustedReviewCount: 0,
+        summary: null,
         loading: false,
       });
     }
@@ -1165,7 +1176,7 @@ export function BookAppointment({ onBack, currentUser }) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setDoctorProfile({ open: false, doctor: null, reviews: [], trustedReviewCount: 0, loading: false })}
+                  onClick={() => setDoctorProfile({ open: false, doctor: null, reviews: [], trustedReviewCount: 0, summary: null, loading: false })}
                   className="self-start rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                   Close
@@ -1187,10 +1198,14 @@ export function BookAppointment({ onBack, currentUser }) {
                   <p className="mt-3 text-2xl font-black text-slate-900">{doctorProfile.doctor.review_count}</p>
                 </div>
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-600">Recommend Rate</p>
-                  <p className="mt-3 text-2xl font-black text-slate-900">{doctorProfile.doctor.recommendation_rate || 0}%</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-600">Trust Signal</p>
+                  <p className="mt-3 text-2xl font-black text-slate-900">
+                    {doctorProfile.summary?.trusted_review_count || 0}
+                  </p>
                   <p className="mt-2 text-sm font-semibold text-emerald-700">
-                    {getRecommendationLabel(doctorProfile.doctor.recommendation_rate || 0)}
+                    {doctorProfile.summary?.trusted_review_count
+                      ? "Trusted circle reviews found"
+                      : getRecommendationLabel(doctorProfile.doctor.recommendation_rate || 0)}
                   </p>
                 </div>
               </div>
@@ -1203,6 +1218,11 @@ export function BookAppointment({ onBack, currentUser }) {
                   <p className="mt-1 text-sky-700">
                     Trusted reviews are shown first and reviewer identity stays private.
                   </p>
+                  {!!doctorProfile.summary?.trusted_average_rating && (
+                    <p className="mt-2 text-sky-700">
+                      Trusted-circle average rating: {doctorProfile.summary.trusted_average_rating.toFixed(1)}/5
+                    </p>
+                  )}
                 </div>
               )}
 

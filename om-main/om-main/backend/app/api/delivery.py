@@ -1,11 +1,14 @@
-from fastapi import APIRouter, HTTPException
 import os
 
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.core.auth import get_current_auth_payload, require_roles, require_subject_match
+from app.core.security import create_access_token
 from app.models.delivery import (
-    DeliveryBoyRegisterRequest,
-    DeliveryBoyLoginRequest,
-    DeliveryBoyApprovalRequest,
     DeliveryBoyActionRequest,
+    DeliveryBoyApprovalRequest,
+    DeliveryBoyLoginRequest,
+    DeliveryBoyRegisterRequest,
 )
 from app.services.delivery_service import DeliveryService
 
@@ -35,34 +38,56 @@ async def login_delivery_boy(request: DeliveryBoyLoginRequest):
     result = DeliveryService.login_delivery_boy(request.name, request.password)
     if not result.get("success"):
         raise HTTPException(status_code=401, detail=result.get("message"))
+    delivery_boy = result.get("delivery_boy") or {}
+    result["access_token"] = create_access_token(
+        {
+            "sub": delivery_boy.get("id"),
+            "role": "delivery_boy",
+            "name": delivery_boy.get("name"),
+            "phone": delivery_boy.get("phone"),
+        }
+    )
+    result["token_type"] = "bearer"
     return result
 
 
 @router.post("/manager/pending")
-async def pending_delivery_boys(payload: dict):
-    if not _validate_system_manager(payload.get("manager_id", ""), payload.get("password", "")):
-        raise HTTPException(status_code=401, detail="Invalid manager credentials")
+async def pending_delivery_boys(
+    payload: dict,
+    _: dict = Depends(require_roles("system_manager")),
+):
     return {"success": True, "requests": DeliveryService.get_pending_delivery_boys()}
 
 
 @router.post("/manager/history")
-async def delivery_boy_history(payload: dict):
-    if not _validate_system_manager(payload.get("manager_id", ""), payload.get("password", "")):
-        raise HTTPException(status_code=401, detail="Invalid manager credentials")
+async def delivery_boy_history(
+    payload: dict,
+    _: dict = Depends(require_roles("system_manager")),
+):
     return {"success": True, "requests": DeliveryService.get_delivery_boy_history()}
 
 
 @router.post("/manager/approve")
-async def approve_or_reject_delivery_boy(request: DeliveryBoyApprovalRequest):
-    if not _validate_system_manager(request.manager_id, request.manager_password):
-        raise HTTPException(status_code=401, detail="Invalid manager credentials")
+async def approve_or_reject_delivery_boy(
+    request: DeliveryBoyApprovalRequest,
+    _: dict = Depends(require_roles("system_manager")),
+):
     if request.approved:
         return DeliveryService.approve_delivery_boy(request.delivery_boy_id, request.manager_id)
-    return DeliveryService.reject_delivery_boy(request.delivery_boy_id, request.manager_id, request.reason or "Rejected by system manager")
+    return DeliveryService.reject_delivery_boy(
+        request.delivery_boy_id,
+        request.manager_id,
+        request.reason or "Rejected by system manager",
+    )
 
 
 @router.get("/orders/{delivery_boy_id}")
-async def get_delivery_orders(delivery_boy_id: str, status: str | None = None):
+async def get_delivery_orders(
+    delivery_boy_id: str,
+    status: str | None = None,
+    auth: dict = Depends(get_current_auth_payload),
+):
+    require_subject_match(delivery_boy_id, auth, allow_roles=("system_manager",))
     return {
         "success": True,
         "orders": DeliveryService.get_orders_for_delivery_boy(delivery_boy_id, status=status),
@@ -70,7 +95,12 @@ async def get_delivery_orders(delivery_boy_id: str, status: str | None = None):
 
 
 @router.post("/orders/{order_id}/complete")
-async def complete_delivery_order(order_id: int, request: DeliveryBoyActionRequest):
+async def complete_delivery_order(
+    order_id: int,
+    request: DeliveryBoyActionRequest,
+    auth: dict = Depends(get_current_auth_payload),
+):
+    require_subject_match(request.delivery_boy_id, auth, allow_roles=("system_manager",))
     result = DeliveryService.complete_order(order_id, request.delivery_boy_id, request.otp or "")
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("message") or "Failed to complete order")
@@ -78,7 +108,12 @@ async def complete_delivery_order(order_id: int, request: DeliveryBoyActionReque
 
 
 @router.post("/orders/{order_id}/cancel")
-async def cancel_delivery_order(order_id: int, request: DeliveryBoyActionRequest):
+async def cancel_delivery_order(
+    order_id: int,
+    request: DeliveryBoyActionRequest,
+    auth: dict = Depends(get_current_auth_payload),
+):
+    require_subject_match(request.delivery_boy_id, auth, allow_roles=("system_manager",))
     if not (request.reason or "").strip():
         raise HTTPException(status_code=400, detail="Cancellation reason is required")
     return DeliveryService.cancel_order(order_id, request.delivery_boy_id, request.reason or "")

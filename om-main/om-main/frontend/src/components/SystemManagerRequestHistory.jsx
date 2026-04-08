@@ -71,7 +71,7 @@ function HistoryCard({ title, subtitle, items, loading, error, renderItem }) {
   );
 }
 
-export function SystemManagerRequestHistory({ managerId, managerPassword, onBack, onLogout }) {
+export function SystemManagerRequestHistory({ managerId, onBack, onLogout }) {
   const [doctorHistory, setDoctorHistory] = useState([]);
   const [pharmacistHistory, setPharmacistHistory] = useState([]);
   const [deliveryHistory, setDeliveryHistory] = useState([]);
@@ -98,15 +98,12 @@ export function SystemManagerRequestHistory({ managerId, managerPassword, onBack
     const [doctorRes, pharmacistRes, deliveryRes] = await Promise.allSettled([
       axios.post(`${API_BASE}/doctor/manager/history`, {
         manager_id: managerId,
-        password: managerPassword,
       }),
       axios.post(`${API_BASE}/auth/system-manager/pharmacist-history`, {
         manager_id: managerId,
-        password: managerPassword,
       }),
       axios.post(`${API_BASE}/delivery/manager/history`, {
         manager_id: managerId,
-        password: managerPassword,
       }),
     ]);
 
@@ -132,9 +129,9 @@ export function SystemManagerRequestHistory({ managerId, managerPassword, onBack
   };
 
   useEffect(() => {
-    if (!managerId || !managerPassword) return;
+    if (!managerId) return;
     loadHistory();
-  }, [managerId, managerPassword]);
+  }, [managerId]);
 
   return (
     <div className="app-shell px-4 py-5 md:px-6">

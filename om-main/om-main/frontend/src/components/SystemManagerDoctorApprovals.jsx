@@ -14,7 +14,7 @@ import {
 import axios from 'axios';
 import { API_BASE } from '../config/api';
 
-export function SystemManagerDoctorApprovals({ managerId, managerPassword, onLogout, onBack }) {
+export function SystemManagerDoctorApprovals({ managerId, onLogout, onBack }) {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
@@ -26,7 +26,6 @@ export function SystemManagerDoctorApprovals({ managerId, managerPassword, onLog
     try {
       const res = await axios.post(`${API_BASE}/doctor/manager/pending-registrations`, {
         manager_id: managerId,
-        password: managerPassword || '',
       });
       setDoctors(res.data.registrations || []);
       setError('');
@@ -40,7 +39,7 @@ export function SystemManagerDoctorApprovals({ managerId, managerPassword, onLog
 
   useEffect(() => {
     loadPendingDoctors();
-  }, [managerId, managerPassword]);
+  }, [managerId]);
 
   const pendingMetrics = useMemo(
     () => ({
@@ -59,7 +58,6 @@ export function SystemManagerDoctorApprovals({ managerId, managerPassword, onLog
       const res = await axios.post(`${API_BASE}/doctor/manager/approve`, {
         doctor_id: doctorId,
         manager_id: managerId,
-        manager_password: managerPassword || '',
         approved: true,
         reason: 'Approved by system manager',
       });
@@ -98,7 +96,6 @@ export function SystemManagerDoctorApprovals({ managerId, managerPassword, onLog
       const res = await axios.post(`${API_BASE}/doctor/manager/approve`, {
         doctor_id: rejectModal.doctorId,
         manager_id: managerId,
-        manager_password: managerPassword || '',
         approved: false,
         reason: rejectModal.reason.trim(),
       });

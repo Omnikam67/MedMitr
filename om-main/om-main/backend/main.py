@@ -14,6 +14,18 @@ from app.services.product_service import ProductService
 init_db()
 
 
+def _allowed_origins() -> list[str]:
+    configured = os.getenv("ALLOWED_ORIGINS", "").strip()
+    if configured:
+        return [item.strip() for item in configured.split(",") if item.strip()]
+    return [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
+
 def _should_index_products_on_startup() -> bool:
     configured = os.getenv("STARTUP_INDEX_PRODUCTS")
     if configured is not None:
@@ -55,7 +67,7 @@ app = FastAPI(title="Agentic Pharmacy Backend", lifespan=lifespan)
 # ✅ CORS Setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,7 +77,7 @@ app.add_middleware(
 from socketio import ASGIApp
 sio = AsyncServer(
     async_mode="asgi",
-    cors_allowed_origins="*",  # Allow all origins
+    cors_allowed_origins=_allowed_origins(),
     ping_timeout=60,
     ping_interval=25,
 )

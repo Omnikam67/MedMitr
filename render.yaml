@@ -5,6 +5,7 @@ services:
     rootDir: om-main/om-main/backend
     buildCommand: pip install -r requirements.txt
     startCommand: bash render-start.sh
+    healthCheckPath: /
     envVars:
       - key: DATABASE_URL
         sync: false
