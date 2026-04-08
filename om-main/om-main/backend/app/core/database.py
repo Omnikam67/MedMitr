@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 from urllib.parse import quote
+import concurrent.futures
 
 # Load local backend .env without overriding host-provided env vars such as Render secrets.
 env_file = Path(__file__).parent.parent.parent / ".env"
@@ -65,15 +66,22 @@ def _build_engine(database_url: str):
     )
 
 
+def _test_connection(engine):
+    with engine.connect() as conn:
+        conn.execute(text("SELECT 1"))
+
 def _initialize_engine():
     primary_engine = _build_engine(CONFIGURED_DATABASE_URL)
     try:
-        with primary_engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
+        # Use an absolute ThreadPoolExecutor timeout to defeat unyielding kernel-level TCP deadlocks
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(_test_connection, primary_engine)
+            future.result(timeout=6)
+            
         print(f"Using database: {CONFIGURED_DATABASE_URL}")
         return primary_engine, CONFIGURED_DATABASE_URL
-    except SQLAlchemyError as exc:
-        print(f"Primary database unavailable: {exc}")
+    except Exception as exc:
+        print(f"Primary database unavailable or timed out: {exc}")
         print(f"Falling back to local SQLite database at {SQLITE_DB_PATH}")
         fallback_engine = _build_engine(SQLITE_DATABASE_URL)
         return fallback_engine, SQLITE_DATABASE_URL
