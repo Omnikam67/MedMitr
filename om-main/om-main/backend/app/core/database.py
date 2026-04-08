@@ -57,7 +57,11 @@ def _build_engine(database_url: str):
         max_overflow=20,
         pool_pre_ping=True,
         pool_recycle=3600,
-        connect_args={"connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "5"))},
+        connect_args={
+            "connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "5")),
+            "read_timeout": 5,
+            "write_timeout": 5,
+        },
     )
 
 
