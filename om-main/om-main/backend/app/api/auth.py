@@ -204,9 +204,9 @@ async def pharmacist_request(request: PharmacistSignupRequest):
 
 
 def _validate_system_manager(manager_id: str, password: str) -> bool:
-    expected_id = os.getenv("SYSTEM_MANAGER_ID", "sysmanager")
-    expected_password = os.getenv("SYSTEM_MANAGER_PASSWORD", "SysManager@123")
-    return manager_id == expected_id and password == expected_password
+    expected_id = os.getenv("SYSTEM_MANAGER_ID") or "sysmanager"
+    expected_password = os.getenv("SYSTEM_MANAGER_PASSWORD") or "SysManager@123"
+    return manager_id.strip() == expected_id.strip() and password.strip() == expected_password.strip()
 
 
 @router.post("/system-manager/login", response_model=AuthResponse)
