@@ -16,6 +16,8 @@ httpx
 # Socket.IO for real-time updates
 python-socketio
 python-engineio
+websockets
+
 aiofiles
 python-multipart
 # Database
