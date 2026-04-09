@@ -135,13 +135,7 @@ class ProductService:
                 db.close()
 
             self.reload()
-            indexed, index_error = self._sync_vector_index()
-            if indexed:
-                return f"Success! Updated {updated_count} existing products and added {added_count} new products."
-            return (
-                f"Success! Updated {updated_count} existing products and added {added_count} new products. "
-                f"Search indexing skipped: {index_error}"
-            )
+            return f"Success! Updated {updated_count} existing products and added {added_count} new products."
         except Exception as e:
             return f"Failed to process file: {str(e)}"
 
@@ -163,10 +157,9 @@ class ProductService:
 
             db.commit()
             self.reload()
-            indexed, index_error = self._sync_vector_index()
-            if indexed:
-                return True, "Product updated successfully."
-            return True, f"Product updated successfully. Search indexing skipped: {index_error}"
+            
+            # Bypassed synchronous ML embedding sync to prevent Render OOM SIGKILL crashes
+            return True, "Product updated successfully."
         except Exception as e:
             db.rollback()
             return False, f"Error saving: {str(e)}"
@@ -202,10 +195,9 @@ class ProductService:
             )
             db.commit()
             self.reload()
-            indexed, index_error = self._sync_vector_index()
-            if indexed:
-                return True, "Product created successfully."
-            return True, f"Product created successfully. Search indexing skipped: {index_error}"
+            
+            # Bypassed synchronous vector index sync locally to save huge RAM footprints
+            return True, "Product created successfully."
         except Exception as e:
             db.rollback()
             return False, f"Error creating product: {str(e)}"
