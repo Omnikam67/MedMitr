@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
+gunicorn
 pandas==2.3.3
 python-dotenv
 langchain
