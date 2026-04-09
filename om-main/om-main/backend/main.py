@@ -101,7 +101,6 @@ def root():
     return {"message": "Agentic Pharmacy Backend Running"}
 
 # ✅ Wrap the FastAPI app with Socket.IO ASGI for export to Uvicorn
-# Temporarily disabled Socket.IO wrapping to debug external traffic timeout
 # app = ASGIApp(sio, app)
 
 # ✅ Socket.IO Event Handlers
