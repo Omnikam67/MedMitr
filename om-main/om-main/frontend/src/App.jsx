@@ -1778,18 +1778,20 @@ const normalizeNearby = (item, idx = 0) => ({
   if (view === "products" || view === "dashboard" || view === "history" || view === "orders") {
     fetchProducts();
   }
+    if (role !== "user") return;
     if (view === "history" || view === "dashboard" || view === "orders") {
       loadOrderHistory();
     }
-  }, [view]);
+  }, [view, role]);
 
   useEffect(() => {
+    if (role !== "user") return;
     if (view !== "dashboard" && view !== "orders" && view !== "history") return;
     const timer = setInterval(() => {
       loadOrderHistory();
     }, 12000);
     return () => clearInterval(timer);
-  }, [view, sessionId, user?.id]);
+  }, [view, sessionId, user?.id, role]);
 
   useEffect(() => {
     if (socketRef.current) return;
