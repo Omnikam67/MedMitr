@@ -1224,6 +1224,14 @@ function App() {
   const [user, setUser] = useState(null); // Store logged-in user data
   const [sessionId, setSessionId] = useState(null); // store backend session/user id
 
+  function performLogout() {
+    clearAuthToken();
+    setRole(null);
+    setUser(null);
+    setSessionId(null);
+    setView("dashboard");
+  }
+
   // Theme State
   const [isDarkMode, setIsDarkMode] = useState(false);
   
@@ -4558,16 +4566,7 @@ function AdminView({ logout, t }) {
       setSavingAction(false);
     }
   };
-
-  function performLogout() {
-    clearAuthToken();
-    setRole(null);
-    setUser(null);
-    setSessionId(null);
-    setView("dashboard");
-  };
-
-  const handleCreateProduct = async (e) => {
+const handleCreateProduct = async (e) => {
     e.preventDefault();
     if (!newProductForm.product_name.trim()) {
       alert("Product name is required.");
