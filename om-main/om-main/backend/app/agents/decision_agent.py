@@ -5,11 +5,9 @@ import uuid
 from difflib import SequenceMatcher
 from datetime import datetime, timedelta
 from typing import Optional
-
 import httpx
 from langfuse import observe
 from langchain_core.messages import HumanMessage, SystemMessage
-
 # ✅ Import the LLM so we can use it to generate human-friendly explanations
 from app.agents.conversational_agent import llm 
 from app.agents.safety_agent import SafetyAgent

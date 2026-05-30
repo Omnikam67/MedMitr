@@ -1,81 +1,14 @@
 {
-  "c2853b49-5509-4789-a035-74d5899692ef": {
+  "43ef4112-f75c-4d78-ac90-f015f45eb073": {
     "structured": {
-      "summary": "The patient, Mr. John Doe, a 45-year-old male, has been experiencing fatigue, shortness of breath, and mild chest discomfort. His medical report shows elevated cholesterol and blood pressure levels.",
-      "findings": [
-        "Elevated glucose level: 104 mg/dl (normal range: 70-100 mg/dl)",
-        "Elevated cholesterol: 230 mg/dl (normal range: 19-100 mg/dl)",
-        "Elevated blood pressure: 150/95 mmHg (normal: <120/≤80 mmHg)"
-      ],
-      "abnormal_flags": [
-        "High glucose level",
-        "High cholesterol",
-        "High blood pressure"
-      ],
-      "next_steps": [
-        "Start antihypertensive medication",
-        "Initiate statin therapy for cholesterol management"
-      ],
-      "uncertainty_note": "The date of birth is August 15, 1979, which makes the patient 45 years old as of April 24, 2024. However, some text is unclear or potentially misspelled (e.g., 'Biagnes', 'Surleatory Betteryw', 'Peference Results', 'hyperlipidemia' possibly misspelled as 'riilipid- hyperlipidemia')."
+      "summary": "The provided image is not a medical report but a technical diagram illustrating the architecture of a chatbot system, including its frontend, backend, algorithms, data handling, and required software modules.",
+      "findings": [],
+      "abnormal_flags": [],
+      "next_steps": [],
+      "uncertainty_note": "The image does not contain any medical information or report. It appears to be a technical flowchart for a chatbot system."
     },
-    "history": [
-      {
-        "role": "user",
-        "content": "marathi convert that report"
-      },
-      {
-        "role": "assistant",
-        "content": "I can provide a summary of the report in English. The report states that Mr. John Doe, a 45-year-old male, is experiencing fatigue, shortness of breath, and mild chest discomfort. His medical report shows elevated cholesterol and blood pressure levels, with specific findings including:\n\n- Elevated glucose level: 104 mg/dl\n- Elevated cholesterol: 230 mg/dl\n- Elevated blood pressure: 150/95 mmHg\n\nThe recommended next steps include starting antihypertensive medication and initiating statin therapy for cholesterol management.\n\nIt is not visible in the report how to translate this information into Marathi."
-      },
-      {
-        "role": "user",
-        "content": "what is fault in my body"
-      },
-      {
-        "role": "assistant",
-        "content": "According to the report, the issues with your body are:\n\n1. Elevated glucose level (104 mg/dl)\n2. Elevated cholesterol (230 mg/dl)\n3. Elevated blood pressure (150/95 mmHg)\n\nThese conditions may be contributing to your symptoms of fatigue, shortness of breath, and mild chest discomfort."
-      }
-    ],
-    "created_at": "2026-03-23T08:46:12.994349",
-    "updated_at": "2026-03-23T08:46:41.102252"
-  },
-  "b80b0f47-d598-4507-a514-e005b25a19ab": {
-    "structured": {
-      "summary": "The patient, Mr. John Doe, a 45-year-old male, has been experiencing fatigue, shortness of breath, and mild chest discomfort. His medical report shows high cholesterol and hypertension.",
-      "findings": [
-        "The patient's glucose level is 104 mg/dl, which is slightly elevated.",
-        "His cholesterol level is 230 mg/dl, which is higher than the normal range.",
-        "His blood pressure is 150/95 mmHg, indicating hypertension."
-      ],
-      "abnormal_flags": [
-        "High cholesterol",
-        "Hypertension"
-      ],
-      "next_steps": [
-        "Start antihypertensive medication",
-        "Initiate statin therapy for cholesterol management"
-      ],
-      "uncertainty_note": "The date of birth is likely incorrect, as it would make the patient 45 years old, but this cannot be confirmed."
-    },
-    "history": [
-      {
-        "role": "user",
-        "content": "convert it into marathi"
-      },
-      {
-        "role": "assistant",
-        "content": "The report summary in English is provided. To convert it into Marathi, I would need to translate the text. However, I can provide you with a translated version of the report summary:\n\n\"सारांश: रोगी, श्री जॉन डो, 45 वर्षाचे पुरुष, थकवा, श्वास घेण्यात त्रास, आणि मध्यम छातीचा दुखावा अनुभवत आहेत. त्यांच्या वैद्यकीय अहवालात उच्च कोलेस्ट्रॉल आणि हायपертेंशन दिसून येतो.\nशोध: रोग्याचा ग्लुकोज स्तर 104 mg/dl आहे, जो थोडासा वाढलेला आहे. त्यांचा कोलेस्ट्रॉल स्तर 230 mg/dl आहे, जो सामान्य श्रेणीपेक्षा जास्त आहे. त्यांचा रक्तदाब 150/95 mmHg आहे, ज्याने हायपертेंशन सूचित करतो.\nअसामान्य ध्वज: उच्च कोलेस्ट्रॉल, हायपटेंशन\nपुढील पावले: हायपертेंशनच्या औषधाची सुरुवात करा, कोलेस्ट्रॉल व्यवस्थापनासाठी स्टेटिन थेरपी सुरू करा\nअनिश्चितता नोट: जन्मतारीख चुकीची असण्याची शक्यता आहे, कारण ती रोग्याचे वय 45 वर्ष दाखवते, परंतु हे निश्चितपणे सांगता येत नाही.\"\n\nPlease note that this is a machine translation and may not be perfect. If you need an accurate translation, I recommend consulting a professional translator."
-      },
-      {
-        "role": "user",
-        "content": "maza ky vadhl ahe"
-      },
-      {
-        "role": "assistant",
-        "content": "Your cholesterol level is 230 mg/dl, which is higher than the normal range."
-      }
-    ],
-    "created_at": "2026-03-23T11:25:03.793709",
-    "updated_at": "2026-03-23T11:25:32.796611"
+    "history": [],
+    "created_at": "2026-04-13T21:08:28.474493",
+    "updated_at": "2026-04-13T21:08:28.474493"
   }
 }

@@ -24,6 +24,8 @@ def _allowed_origins() -> list[str]:
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://pharmacy123.vercel.app",
+        "https://pharma-pi-one.vercel.app",
+        "https://pharma-iko62g44i-omnikam67s-projects.vercel.app"
     ]
 
 
@@ -79,9 +81,12 @@ app.add_middleware(
 from socketio import ASGIApp
 sio = AsyncServer(
     async_mode="asgi",
-    cors_allowed_origins="*",
+    cors_allowed_origins=_allowed_origins(),
     ping_timeout=60,
     ping_interval=25,
+    allow_upgrades=True,
+    engineio_logger=True,
+    sio_logger=True,
 )
 
 # ✅ Include Routers on the FastAPI app
@@ -100,8 +105,8 @@ app.include_router(report.router)
 def root():
     return {"message": "Agentic Pharmacy Backend Running"}
 
-# ✅ Wrap the FastAPI app with Socket.IO ASGI for export to Uvicorn
-# app = ASGIApp(sio, app)
+# ✅ Wrap the FastAPI app with Socket.IO ASGI for export to Uvico
+app = ASGIApp(sio, app)
 
 # ✅ Socket.IO Event Handlers
 @sio.event

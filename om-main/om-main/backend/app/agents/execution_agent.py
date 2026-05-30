@@ -242,7 +242,7 @@ class ExecutionAgent:
             if word in haystack:
                 score += 2.0
 
-        if normalized_symptom and normalized_symptom in haystack:
+        if normalized_symptom  in haystack:
             score += 30.0
 
         stock = candidate.get("stock", 0) or 0
