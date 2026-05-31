@@ -4,7 +4,7 @@ services:
     runtime: python
     rootDir: om-main/om-main/backend
     buildCommand: pip install -r requirements.txt
-    startCommand: python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT --log-level info
+    startCommand: python -m uvicorn main:app --host 0.0.0.0 --port $PORT --log-level info
     healthCheckPath: /
     envVars:
       - key: DATABASE_URL
