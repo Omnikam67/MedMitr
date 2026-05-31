@@ -11,8 +11,6 @@ from app.core import doctor_models  # Import to create tables on startup
 from app.api import products, patients, orders, chat, refill, auth, nearby, report, doctor, delivery
 from app.services.product_service import ProductService
 
-init_db()
-
 
 def _allowed_origins() -> list[str]:
     configured = os.getenv("ALLOWED_ORIGINS", "").strip()
