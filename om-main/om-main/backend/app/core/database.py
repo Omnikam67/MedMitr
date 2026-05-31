@@ -28,11 +28,27 @@ DEFAULT_DATABASE_URL = (
 
 # Prefer a single DATABASE_URL in hosted environments like Render.
 RENDER_ENV = bool(os.getenv("RENDER"))
-DATABASE_URL_ENV = (os.getenv("DATABASE_URL") or "").strip()
+# Allow common hosted DB env var names (Railway, ClearDB, JawsDB, Render, etc.)
+_db_env_candidates = [
+    os.getenv("DATABASE_URL"),
+    os.getenv("RAILWAY_DATABASE_URL"),
+    os.getenv("CLEARDB_DATABASE_URL"),
+    os.getenv("JAWSDB_MARIA_URL"),
+    os.getenv("JAWSDB_URL"),
+]
+DATABASE_URL_ENV = ""
+for _val in _db_env_candidates:
+    if _val:
+        DATABASE_URL_ENV = _val.strip()
+        break
 SQLITE_DB_PATH = Path(__file__).parent.parent.parent / "local_dev.db"
 SQLITE_DATABASE_URL = f"sqlite:///{SQLITE_DB_PATH.as_posix()}"
 
 if DATABASE_URL_ENV:
+    # Normalize common provider URL prefixes to SQLAlchemy+pymysql format
+    if DATABASE_URL_ENV.startswith("mysql://"):
+        DATABASE_URL_ENV = DATABASE_URL_ENV.replace("mysql://", "mysql+pymysql://", 1)
+
     CONFIGURED_DATABASE_URL = DATABASE_URL_ENV
 elif RENDER_ENV:
     # On Render, avoid blocking startup by trying localhost MySQL unless it is
@@ -41,6 +57,11 @@ elif RENDER_ENV:
     CONFIGURED_DATABASE_URL = SQLITE_DATABASE_URL
 else:
     CONFIGURED_DATABASE_URL = DEFAULT_DATABASE_URL
+
+print("Detected DB env vars:")
+print(f"  DATABASE_URL: {bool(os.getenv('DATABASE_URL'))}")
+print(f"  RAILWAY_DATABASE_URL: {bool(os.getenv('RAILWAY_DATABASE_URL'))}")
+print(f"  CONFIGURED_DATABASE_URL: {CONFIGURED_DATABASE_URL}")
 
 
 def _build_engine(database_url: str):
