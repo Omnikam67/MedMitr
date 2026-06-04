@@ -1,6 +1,4 @@
-import chromadb
 from langfuse import observe
-from sentence_transformers import SentenceTransformer
 
 _client = None
 _model = None
@@ -9,6 +7,7 @@ _model = None
 def get_client():
     global _client
     if _client is None:
+        import chromadb
         _client = chromadb.Client()
     return _client
 
@@ -16,6 +15,7 @@ def get_client():
 def get_model():
     global _model
     if _model is None:
+        from sentence_transformers import SentenceTransformer
         _model = SentenceTransformer("all-MiniLM-L6-v2")
     return _model
 
