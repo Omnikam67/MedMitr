@@ -5,9 +5,11 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.database import Base, SQLITE_DB_PATH, CONFIGURED_DATABASE_URL
 from app.core.models import (
-    User, Product, DeliveryBoy, Doctor, AppointmentRequest,
-    PatientReferral, Order, OrderItem, Reminder, ChatHistory,
-    UserTrustedContact, DoctorRegistrationRequest, DoctorFeedback, Revenue
+    User, Product, DeliveryBoy, Order, OrderItem, Reminder, ChatHistory, UserTrustedContact
+)
+from app.core.doctor_models import (
+    DoctorTable, DoctorRegistrationRequest, AppointmentRequestTable,
+    PatientReferralTable, DoctorFeedbackTable, RevenueTable
 )
 
 def copy_table(sqlite_conn, mysql_session, model_class, table_name):
@@ -56,8 +58,18 @@ def main():
 
     # Create MySQL connection engine & tables
     mysql_engine = create_engine(CONFIGURED_DATABASE_URL)
-    print("Creating tables in MySQL database...")
-    Base.metadata.create_all(bind=mysql_engine)
+    from sqlalchemy import text
+    with mysql_engine.begin() as conn:
+        conn.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+        print("Dropping existing tables in MySQL database for a clean slate...")
+        result = conn.execute(text("SHOW TABLES;"))
+        tables = [row[0] for row in result.fetchall()]
+        for table in tables:
+            print(f"Dropping table: {table}")
+            conn.execute(text(f"DROP TABLE IF EXISTS `{table}` CASCADE;"))
+        print("Creating tables in MySQL database...")
+        Base.metadata.create_all(bind=conn)
+        conn.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
     
     # Initialize session
     MySQLSession = sessionmaker(bind=mysql_engine)
@@ -71,17 +83,17 @@ def main():
         (User, "users"),
         (Product, "products"),
         (DeliveryBoy, "delivery_boys"),
-        (Doctor, "doctors"),
-        (AppointmentRequest, "appointment_requests"),
-        (PatientReferral, "patient_referrals"),
+        (DoctorTable, "doctors"),
+        (AppointmentRequestTable, "appointment_requests"),
+        (PatientReferralTable, "patient_referrals"),
         (Order, "orders"),
         (OrderItem, "order_items"),
         (Reminder, "reminders"),
         (ChatHistory, "chat_history"),
         (UserTrustedContact, "user_trusted_contacts"),
         (DoctorRegistrationRequest, "doctor_registration_requests"),
-        (DoctorFeedback, "doctor_feedback"),
-        (Revenue, "revenues"),
+        (DoctorFeedbackTable, "doctor_feedback"),
+        (RevenueTable, "revenues"),
     ]
 
     try:

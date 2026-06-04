@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, Text, ForeignKey
+from sqlalchemy.dialects.mysql import LONGTEXT
 from datetime import datetime
 from app.core.database import Base
 import uuid
@@ -22,8 +23,8 @@ class DoctorTable(Base):
     address = Column(Text, nullable=True)
     clinic_address = Column(Text, nullable=True)
     appointment_fee = Column(Float, nullable=True)  # Doctor's consultation fee
-    profile_image = Column(Text, nullable=True)
-    degree_certificate_image = Column(Text, nullable=True)
+    profile_image = Column(Text().with_variant(LONGTEXT, "mysql"), nullable=True)
+    degree_certificate_image = Column(Text().with_variant(LONGTEXT, "mysql"), nullable=True)
     availability = Column(Text, nullable=True)  # JSON format
     status = Column(String(20), default="pending")  # pending, approved, rejected
     preferred_language = Column(String(10), default="en")
@@ -61,12 +62,12 @@ class AppointmentRequestTable(Base):
     appointment_date = Column(String(10), nullable=True)  # YYYY-MM-DD
     appointment_time = Column(String(5), nullable=True)  # HH:MM
     notes = Column(Text, nullable=True)
-    referral_id = Column(String(36), ForeignKey("patient_referrals.id"), nullable=True, index=True)
+    referral_id = Column(String(36), ForeignKey("patient_referrals.id", name="fk_appointment_referral", use_alter=True), nullable=True, index=True)
     status = Column(String(20), default="pending")  # pending, approved, completed, cancelled
     reason = Column(Text, nullable=True)  # cancellation or approval reason
     prescription_notes = Column(Text, nullable=True)
     prescription_text = Column(Text, nullable=True)
-    prescription_image = Column(Text, nullable=True)
+    prescription_image = Column(Text().with_variant(LONGTEXT, "mysql"), nullable=True)
     completed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -80,7 +81,7 @@ class PatientReferralTable(Base):
     __tablename__ = "patient_referrals"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    source_appointment_id = Column(String(36), ForeignKey("appointment_requests.id"), nullable=False, index=True)
+    source_appointment_id = Column(String(36), ForeignKey("appointment_requests.id", name="fk_referral_source_appointment", use_alter=True), nullable=False, index=True)
     from_doctor_id = Column(String(36), ForeignKey("doctors.id"), nullable=False, index=True)
     to_doctor_id = Column(String(36), ForeignKey("doctors.id"), nullable=False, index=True)
     patient_name = Column(String(255), nullable=False)
@@ -90,7 +91,7 @@ class PatientReferralTable(Base):
     reason = Column(Text, nullable=False)
     clinical_notes = Column(Text, nullable=True)
     status = Column(String(30), default="pending_booking")  # pending_booking, booked, approved, completed, cancelled
-    referred_appointment_id = Column(String(36), ForeignKey("appointment_requests.id"), nullable=True, index=True)
+    referred_appointment_id = Column(String(36), ForeignKey("appointment_requests.id", name="fk_referral_referred_appointment", use_alter=True), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
