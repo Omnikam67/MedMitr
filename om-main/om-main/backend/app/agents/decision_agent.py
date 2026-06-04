@@ -977,6 +977,12 @@ class DecisionAgent:
                 delivery_location = self.pending_orders[session_id].get("delivery_location")
                 delivery_map_url = self.pending_orders[session_id].get("delivery_map_url")
 
+            if not delivery_location and session_id:
+                from app.services.user_service import UserService
+                user_info = UserService.get_user(str(session_id))
+                if user_info and user_info.get("address"):
+                    delivery_location = user_info.get("address")
+
             if not delivery_location:
                 if session_id:
                     existing_pending = self.pending_orders.get(session_id, {})
@@ -992,7 +998,7 @@ class DecisionAgent:
                         "pending_order_token": pending_order_token,
                     }
                 return {
-                    "message": "Before I confirm your order, please provide your delivery location. You can enter it manually or use your live location.",
+                    "message": f"Before I confirm your order for **{product_name}**, please provide your delivery location. You can enter it manually or use your live location.",
                     "needs_location": True,
                     "pending_order": {
                         "product_name": product_name,
@@ -1031,7 +1037,7 @@ class DecisionAgent:
                 notification_sent = bool(execution_result.get("notification_sent"))
                 notification_error = execution_result.get("notification_error")
 
-                confirmation_message = "Order Confirmed! Your medicine will be prepared for delivery shortly."
+                confirmation_message = f"Order Confirmed for **{product_name}**! Your medicine will be prepared for delivery shortly."
                 if not notification_sent:
                     confirmation_message += "\n\nWhatsApp confirmation could not be delivered. Please verify your phone number and Twilio WhatsApp setup."
                     if notification_error:

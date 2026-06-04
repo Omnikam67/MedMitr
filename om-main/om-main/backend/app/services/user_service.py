@@ -83,7 +83,8 @@ class UserService:
         password: str,
         age: Optional[int],
         role: str,
-        preferred_language: Optional[str] = None
+        preferred_language: Optional[str] = None,
+        address: Optional[str] = None
     ) -> Dict[str, Any]:
         """Register a new user (phone for regular users, shop_id for admins)"""
         db = SessionLocal()
@@ -107,7 +108,8 @@ class UserService:
                 password_hash=UserService._hash_password(password),
                 age=age,
                 role=UserRole(role),
-                preferred_language=preferred_language or "en"
+                preferred_language=preferred_language or "en",
+                address=address
             )
             db.add(db_user)
             db.commit()

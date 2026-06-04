@@ -25,19 +25,22 @@ print("TEST 1: OTC medicine")
 print(agent.validate_order(
     patient_id=1,
     product_name="Paracetamol",
-    quantity=2
+    quantity=2,
+    has_prescription=False
 ))
 
 print("\nTEST 2: Prescription medicine without history")
 print(agent.validate_order(
     patient_id=999,
     product_name="Amoxicillin",
-    quantity=1
+    quantity=1,
+    has_prescription=False
 ))
 
 print("\nTEST 3: Invalid quantity")
 print(agent.validate_order(
     patient_id=1,
     product_name="Paracetamol",
-    quantity=5
+    quantity=5,
+    has_prescription=False
 ))

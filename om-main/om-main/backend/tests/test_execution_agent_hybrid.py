@@ -35,6 +35,12 @@ class DummyProductService:
             },
         ]
 
+    def get_product_by_name(self, name: str):
+        for p in self.get_all_products():
+            if p["product_name"] == name:
+                return p
+        return None
+
 
 def test_hybrid_symptom_ranking_prefers_relevant_leg_pain_product(monkeypatch):
     agent = ExecutionAgent.__new__(ExecutionAgent)

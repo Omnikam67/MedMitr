@@ -13,14 +13,11 @@ def test_send_notification_no_credentials(monkeypatch):
     # if we reach here without error, it's fine
 
 
-def test_user_service_register_and_notify(tmp_path):
+def test_user_service_register_and_notify():
     # register a user and ensure user data persists
-    # use tmp file for database by monkeypatching path
-    monkeypatch = __import__('pytest').MonkeyPatch()
-    monkeypatch.setattr('app.services.user_service.USERS_DB_FILE', str(tmp_path / 'users.json'))
-
-    result = UserService.register_user('Notify', '555', None, 'pw', None, 'user')
+    import uuid
+    phone = "555" + "".join(ch for ch in uuid.uuid4().hex if ch.isdigit())[:7]
+    result = UserService.register_user('Notify', phone, None, 'pw', None, 'user')
     assert result['success']
     user = UserService.get_user(result['user']['id'])
-    assert user['phone'] == '555'
-    monkeypatch.undo()
+    assert user['phone'] == UserService.normalize_phone(phone)

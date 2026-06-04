@@ -14,8 +14,8 @@ def _run_test_logic():
 
     # register a user with a random phone to avoid collisions in repeated runs
     import uuid
-    phone = "555" + uuid.uuid4().hex[:6]
-    reg = UserService.register_user("PendingTester", phone, None, "pw", None, "user")
+    phone = "555" + "".join(ch for ch in uuid.uuid4().hex if ch.isdigit())[:7]
+    reg = UserService.register_user("PendingTester", phone, None, "pw", None, "user", address="123 Test St")
     assert reg.get("success"), "user registration failed in test"
     session = reg.get("user", {}).get("id")
     assert session, "Session ID should not be None"
@@ -55,8 +55,8 @@ def _run_test_logic():
 def _run_misleading_product():
     da = DecisionAgent()
     import uuid
-    phone = "555" + uuid.uuid4().hex[:6]
-    reg = UserService.register_user("PendingTester", phone, None, "pw", None, "user")
+    phone = "555" + "".join(ch for ch in uuid.uuid4().hex if ch.isdigit())[:7]
+    reg = UserService.register_user("PendingTester", phone, None, "pw", None, "user", address="123 Test St")
     session = reg.get("user", {}).get("id")
 
     # prompt for NORSAN but LLM later mis-parses the follow-up quantity as Nurofen
@@ -93,8 +93,8 @@ def _run_prescription_flow():
     """Simulate a prescription-required order, then uploading an image."""
     da = DecisionAgent()
     import uuid
-    phone = "555" + uuid.uuid4().hex[:6]
-    reg = UserService.register_user("PrescTester", phone, None, "pw", None, "user")
+    phone = "555" + "".join(ch for ch in uuid.uuid4().hex if ch.isdigit())[:7]
+    reg = UserService.register_user("PrescTester", phone, None, "pw", None, "user", address="123 Test St")
     session = reg.get("user", {}).get("id")
 
     # monkey-patch safety to force prescription requirement
