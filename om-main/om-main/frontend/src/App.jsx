@@ -1021,12 +1021,12 @@ function SystemManagerView({ managerId, onLogout, onOpenDoctorApprovals, onOpenH
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-sky-100 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <header className="bg-white rounded-2xl shadow-xl border border-blue-100 px-6 py-5 flex items-center justify-between gap-4">
+        <header className="bg-white rounded-2xl shadow-xl border border-blue-100 px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black text-blue-900">System Manager Panel</h1>
             <p className="text-slate-600 text-base mt-1">Approve pharmacist and delivery partner requests from one place.</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={onOpenDoctorApprovals}
               className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
@@ -1262,6 +1262,7 @@ function App() {
   // Navigation State
   const [view, setView] = useState("dashboard");
   const [publicView, setPublicView] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Nearby Shops State
   const [nearbyShops, setNearbyShops] = useState([]);
@@ -1557,6 +1558,80 @@ const handleSetReminder = async () => {
     const lang = preferredLanguage || "en";
     const str = (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
     return Object.keys(vars).reduce((acc, k) => acc.replaceAll(`{${k}}`, vars[k]), str);
+  };
+
+  const renderUserSidebar = () => {
+    return (
+      <>
+        {isMobileMenuOpen && (
+          <div className="sidebar-backdrop" onClick={() => setIsMobileMenuOpen(false)} />
+        )}
+        <aside className={`dashboard-sidebar glass-card strong ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+          <div className="sidebar-header flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="sidebar-logo">
+                <Pill size={22} />
+              </div>
+              <div>
+                <div className="sidebar-title">{t("app_name")}</div>
+                <div className="sidebar-subtitle">Smart patient dashboard</div>
+              </div>
+            </div>
+            <button className="lg:hidden p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
+              <X size={20} />
+            </button>
+          </div>
+
+          <nav className="sidebar-nav">
+            <button className={`nav-link ${view === 'dashboard' ? 'active' : ''}`} onClick={() => goToView("dashboard")}>
+              <Home size={18} /> {t("dashboard")}
+            </button>
+            <button className={`nav-link ${view === 'chat' ? 'active' : ''}`} onClick={() => goToView("chat")}>
+              <Bot size={18} /> {t("chat")}
+            </button>
+            <button className={`nav-link ${view === 'report_chat' ? 'active' : ''}`} onClick={() => goToView("report_chat")}>
+              <FileText size={18} /> {t("report_analysis")}
+            </button>
+            <button className={`nav-link ${view === 'products' ? 'active' : ''}`} onClick={() => goToView("products")}>
+              <ShoppingCart size={18} /> {t("products")}
+            </button>
+            <button className={`nav-link ${view === 'orders' ? 'active' : ''}`} onClick={() => goToView("orders")}>
+              <Package size={18} /> Orders
+            </button>
+            <button className={`nav-link ${view === 'book_appointment' ? 'active' : ''}`} onClick={() => goToView("book_appointment")}>
+              <Calendar size={18} /> Book Appointment
+            </button>
+            <button className={`nav-link ${view === 'nearby' ? 'active' : ''}`} onClick={() => goToView("nearby")}>
+              <Map size={18} /> {t("nearby_shops")}
+            </button>
+            <button className={`nav-link ${view === 'history' ? 'active' : ''}`} onClick={() => goToView("history")}>
+              <History size={18} /> {t("history_title")}
+            </button>
+          </nav>
+
+          <div className="sidebar-footer">
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="pill-btn"
+            >
+              {isDarkMode ? t("light") : t("dark")}
+            </button>
+            <button
+              onClick={openManageProfile}
+              className="pill-btn primary"
+            >
+              Manage Profile
+            </button>
+            <button
+              onClick={performLogout}
+              className="pill-btn text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-950/20"
+            >
+              <LogOut size={16} /> Logout
+            </button>
+          </div>
+        </aside>
+      </>
+    );
   };
 
   useEffect(() => {
@@ -2151,6 +2226,7 @@ const normalizeNearby = (item, idx = 0) => ({
 
   const goToView = (target) => {
     setView(target);
+    setIsMobileMenuOpen(false);
   };
 
   // Image upload handler
@@ -2483,54 +2559,22 @@ const applyChatResponse = (data, languageCode) => {
     return (
       <div className={`dashboard-shell ${isDarkMode ? "dash-dark" : ""}`}>
         <div className="dash-layout">
-          <aside className="dashboard-sidebar glass-card strong">
-            <div className="sidebar-header">
-              <div className="sidebar-logo">
-                <Pill size={22} />
-              </div>
-              <div>
-                <div className="sidebar-title">{t("app_name")}</div>
-                <div className="sidebar-subtitle">Smart patient dashboard</div>
-              </div>
-            </div>
-
-            <nav className="sidebar-nav">
-              <button className="nav-link" onClick={() => goToView("dashboard")}>
-                <Home size={18} /> {t("dashboard")}
-              </button>
-              <button className="nav-link" onClick={() => goToView("chat")}>
-                <Bot size={18} /> {t("chat")}
-              </button>
-              <button className="nav-link" onClick={() => goToView("products")}>
-                <ShoppingCart size={18} /> {t("products")}
-              </button>
-              <button className="nav-link" onClick={() => goToView("orders")}>
-                <Package size={18} /> Orders
-              </button>
-              <button className="nav-link" onClick={() => goToView("book_appointment")}>
-                <Calendar size={18} /> Book Appointment
-              </button>
-              <button className="nav-link active" onClick={() => goToView("profile")}>
-                <User size={18} /> Manage Profile
-              </button>
-            </nav>
-
-            <div className="sidebar-footer">
-              <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="pill-btn"
-              >
-                {isDarkMode ? t("light") : t("dark")}
-              </button>
-            </div>
-          </aside>
+          {renderUserSidebar()}
 
           <div className="dash-main">
             <header className="dash-topbar glass-card strong">
-              <div>
-                <div className="topbar-kicker">{t("profile")}</div>
-                <div className="topbar-title">{t("profile_title")}</div>
-                <div className="topbar-sub">Update your name, phone number, and preferred language.</div>
+              <div className="flex items-center gap-3">
+                <button 
+                  className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                >
+                  <Menu size={20} />
+                </button>
+                <div>
+                  <div className="topbar-kicker">{t("profile")}</div>
+                  <div className="topbar-title">{t("profile_title")}</div>
+                  <div className="topbar-sub">Update your name, phone number, and preferred language.</div>
+                </div>
               </div>
             </header>
 
@@ -2778,178 +2822,159 @@ const applyChatResponse = (data, languageCode) => {
   // ==========================================
   if (view === "nearby") {
     return (
-      <div className={`flex h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-[#F8FAFC]'} transition`}>
-        {/* LEFT SIDEBAR */}
-        <aside className={`w-64 ${isDarkMode ? 'bg-teal-700' : 'bg-teal-600'} text-white flex flex-col shadow-xl transition`}>
-          <div className={`p-6 border-b ${isDarkMode ? 'border-teal-600' : 'border-teal-500'} flex items-center gap-3`}>
-            <Pill size={28} className="text-teal-200" />
-            <h1 className="text-2xl font-bold tracking-wide">{t("app_name")}</h1>
-          </div>
-          <nav className="flex-1 p-4 space-y-2">
-            <button onClick={() => goToView("dashboard")} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${view === 'dashboard' ? `${isDarkMode ? 'bg-teal-800 shadow-inner' : 'bg-teal-500 shadow-inner'}` : 'hover:bg-teal-600'}`}>
-              <Home size={20} className={view === 'dashboard' ? 'text-white' : 'text-teal-200'} /> {t("dashboard")}
-            </button>
-            <button onClick={() => goToView("chat")} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${view === 'chat' ? `${isDarkMode ? 'bg-teal-800 shadow-inner' : 'bg-teal-500 shadow-inner'}` : 'hover:bg-teal-600'}`}>
-              <Pill size={20} className={view === 'chat' ? 'text-white' : 'text-teal-200'} /> {t("chat")}
-            </button>
-            <button onClick={() => goToView("products")} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${view === 'products' ? `${isDarkMode ? 'bg-teal-800 shadow-inner' : 'bg-teal-500 shadow-inner'}` : 'hover:bg-teal-600'}`}>
-              <ShoppingCart size={20} className={view === 'products' ? 'text-white' : 'text-teal-200'} /> {t("products")}
-            </button>
-            
-            <button onClick={() => goToView("nearby")} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${view === 'nearby' ? `${isDarkMode ? 'bg-teal-800 shadow-inner' : 'bg-teal-500 shadow-inner'}` : 'hover:bg-teal-600'}`}>
-              <Map size={20} className={view === 'nearby' ? 'text-white' : 'text-teal-200'} /> {t("nearby_shops")}
-            </button>
-          </nav>
-          <div className={`p-4 border-t ${isDarkMode ? 'border-teal-600' : 'border-teal-500'} space-y-3`}>
-            <button onClick={() => setIsDarkMode(!isDarkMode)} className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold transition ${isDarkMode ? 'bg-teal-800 hover:bg-teal-700 text-yellow-300' : 'bg-teal-500 hover:bg-teal-600 text-white'}`}>
-              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-              {isDarkMode ? t("light") : t("dark")}
-            </button>
-            <button onClick={openManageProfile} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition">
-              <User size={18} /> {t("profile")}
-            </button>
-          </div>
-        </aside>
+      <div className={`dashboard-shell ${isDarkMode ? "dash-dark" : ""}`}>
+        <div className="dash-layout">
+          {renderUserSidebar()}
 
-        {/* MAIN CONTENT */}
-        <div className={`flex-1 flex flex-col h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-[#F8FAFC]'} transition`}>
-          <header className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-8 py-4 flex justify-between items-center shadow-sm transition`}>
-            <div>
-              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{t("nearby_title")}</h2>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{t("nearby_subtitle")}</p>
-            </div>
-          </header>
+          {/* MAIN CONTENT */}
+          <div className="dash-main">
+            <header className="dash-topbar glass-card strong">
+              <div className="flex items-center gap-3">
+                <button 
+                  className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                >
+                  <Menu size={20} />
+                </button>
+                <div>
+                  <div className="topbar-kicker">Shops</div>
+                  <div className="topbar-title">{t("nearby_title")}</div>
+                  <div className="topbar-sub">{t("nearby_subtitle")}</div>
+                </div>
+              </div>
+            </header>
 
-          <main className="flex-1 overflow-y-auto p-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className={`rounded-2xl p-5 border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-                <div className="space-y-4">
-                  <button onClick={handleUseLocation} className="w-full px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">
-                    {t("use_location")}
-                  </button>
-                  {nearbyLocationLabel && (
-                    <div className={`text-xs rounded-lg px-3 py-2 border ${isDarkMode ? 'bg-blue-900/20 border-blue-700 text-blue-200' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
-                      Current location: {nearbyLocationLabel}
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <label className={`block text-xs font-bold uppercase ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{t("search_place")}</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={placeQuery}
-                        onChange={(e) => setPlaceQuery(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handlePlaceSearch()}
-                        placeholder={t("search_place_placeholder")}
-                        className={`flex-1 px-3 py-2 rounded-xl border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500'}`}
-                      />
-                      <button
-                        onClick={handlePlaceSearch}
-                        className={`px-3 py-2 rounded-xl text-sm font-semibold transition ${isDarkMode ? 'bg-blue-700 text-white hover:bg-blue-600' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-                        disabled={placeLoading}
-                      >
-                        {placeLoading ? t("searching") : t("search_place")}
-                      </button>
-                    </div>
-                    {!!placeResults.length && (
-                      <div className={`max-h-40 overflow-y-auto rounded-xl border ${isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'}`}>
-                        {placeResults.map((p, idx) => (
-                          <button
-                            key={`${p.display_name}-${idx}`}
-                            onClick={() => handlePickPlace(p)}
-                            className={`w-full text-left px-3 py-2 text-xs border-b last:border-b-0 transition ${isDarkMode ? 'border-gray-600 text-gray-100 hover:bg-gray-600' : 'border-gray-100 text-gray-700 hover:bg-gray-50'}`}
-                          >
-                            <div className="font-semibold">{p.display_name}</div>
-                            <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
-                              {t("pick_location")} ({Number(p.lat).toFixed(5)}, {Number(p.lng).toFixed(5)})
-                            </div>
-                          </button>
-                        ))}
+            <main className="glass-card chat-main p-4 overflow-y-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className={`rounded-2xl p-5 border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+                  <div className="space-y-4">
+                    <button onClick={handleUseLocation} className="w-full px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">
+                      {t("use_location")}
+                    </button>
+                    {nearbyLocationLabel && (
+                      <div className={`text-xs rounded-lg px-3 py-2 border ${isDarkMode ? 'bg-blue-900/20 border-blue-700 text-blue-200' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
+                        Current location: {nearbyLocationLabel}
                       </div>
                     )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="number"
-                      step="any"
-                      value={manualCoords.lat}
-                      onChange={(e) => setManualCoords((prev) => ({ ...prev, lat: e.target.value }))}
-                      placeholder={t("latitude")}
-                      className={`w-full px-3 py-2 rounded-xl border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500'}`}
-                    />
-                    <input
-                      type="number"
-                      step="any"
-                      value={manualCoords.lng}
-                      onChange={(e) => setManualCoords((prev) => ({ ...prev, lng: e.target.value }))}
-                      placeholder={t("longitude")}
-                      className={`w-full px-3 py-2 rounded-xl border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500'}`}
-                    />
-                  </div>
-                  <button
-                    onClick={handleManualNearbySearch}
-                    className={`w-full px-4 py-2 rounded-xl font-semibold transition ${isDarkMode ? 'bg-teal-700 text-white hover:bg-teal-600' : 'bg-teal-600 text-white hover:bg-teal-700'}`}
-                  >
-                    {t("find_shops")}
-                  </button>
-                  {nearbyError && (
-                    <div className={`text-xs rounded-lg px-3 py-2 border ${isDarkMode ? 'bg-amber-900/30 border-amber-700 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
-                      {nearbyError}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-xs">
-                    <input
-                      type="checkbox"
-                      checked={nearbyPolling}
-                      onChange={(e) => setNearbyPolling(e.target.checked)}
-                      className="h-4 w-4"
-                    />
-                    <span className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Auto refresh nearby shops</span>
-                  </div>
-                </div>
-
-                <div className="mt-6 space-y-3">
-                  {nearbyLoading ? (
-                    <div className="text-sm text-gray-500">{t("nearby_loading")}</div>
-                  ) : nearbyShops.length === 0 ? (
-                    <div className="text-sm text-gray-500">{t("no_shops")}</div>
-                  ) : (
-                    nearbyShops.map((shop, idx) => (
-                      <div key={`${shop.id}-${idx}`} className={`p-3 rounded-xl border ${isDarkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-100 bg-gray-50'}`}>
-                        <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{shop.name}</div>
-                        <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{shop.address}</div>
-                        {shop.distance_km != null && (
-                          <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{t("distance")}: {shop.distance_km.toFixed(2)} km</div>
-                        )}
-                        <div className="mt-2 flex items-center gap-3 text-xs">
-                          <button
-                            onClick={() => handleRouteTo(shop)}
-                            className={`${isDarkMode ? 'text-blue-300 hover:text-blue-200' : 'text-blue-700 hover:text-blue-600'} hover:underline`}
-                          >
-                            {t("closest_route")}
-                          </button>
-                          <a
-                            href={`https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className={`${isDarkMode ? "text-emerald-300 hover:text-emerald-200" : "text-emerald-700 hover:text-emerald-600"} hover:underline`}
-                          >
-                            Open in Google Maps
-                          </a>
-                        </div>
+                    <div className="space-y-2">
+                      <label className={`block text-xs font-bold uppercase ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{t("search_place")}</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={placeQuery}
+                          onChange={(e) => setPlaceQuery(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handlePlaceSearch()}
+                          placeholder={t("search_place_placeholder")}
+                          className={`flex-1 px-3 py-2 rounded-xl border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500'}`}
+                        />
+                        <button
+                          onClick={handlePlaceSearch}
+                          className={`px-3 py-2 rounded-xl text-sm font-semibold transition ${isDarkMode ? 'bg-blue-700 text-white hover:bg-blue-600' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                          disabled={placeLoading}
+                        >
+                          {placeLoading ? t("searching") : t("search_place")}
+                        </button>
                       </div>
-                    ))
-                  )}
-                </div>
-              </div>
+                      {!!placeResults.length && (
+                        <div className={`max-h-40 overflow-y-auto rounded-xl border ${isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-white'}`}>
+                          {placeResults.map((p, idx) => (
+                            <button
+                              key={`${p.display_name}-${idx}`}
+                              onClick={() => handlePickPlace(p)}
+                              className={`w-full text-left px-3 py-2 text-xs border-b last:border-b-0 transition ${isDarkMode ? 'border-gray-600 text-gray-100 hover:bg-gray-600' : 'border-gray-100 text-gray-700 hover:bg-gray-50'}`}
+                            >
+                              <div className="font-semibold">{p.display_name}</div>
+                              <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
+                                {t("pick_location")} ({Number(p.lat).toFixed(5)}, {Number(p.lng).toFixed(5)})
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="number"
+                        step="any"
+                        value={manualCoords.lat}
+                        onChange={(e) => setManualCoords((prev) => ({ ...prev, lat: e.target.value }))}
+                        placeholder={t("latitude")}
+                        className={`w-full px-3 py-2 rounded-xl border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500'}`}
+                      />
+                      <input
+                        type="number"
+                        step="any"
+                        value={manualCoords.lng}
+                        onChange={(e) => setManualCoords((prev) => ({ ...prev, lng: e.target.value }))}
+                        placeholder={t("longitude")}
+                        className={`w-full px-3 py-2 rounded-xl border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500'}`}
+                      />
+                    </div>
+                    <button
+                      onClick={handleManualNearbySearch}
+                      className={`w-full px-4 py-2 rounded-xl font-semibold transition ${isDarkMode ? 'bg-teal-700 text-white hover:bg-teal-600' : 'bg-teal-600 text-white hover:bg-teal-700'}`}
+                    >
+                      {t("find_shops")}
+                    </button>
+                    {nearbyError && (
+                      <div className={`text-xs rounded-lg px-3 py-2 border ${isDarkMode ? 'bg-amber-900/30 border-amber-700 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+                        {nearbyError}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={nearbyPolling}
+                        onChange={(e) => setNearbyPolling(e.target.checked)}
+                        className="h-4 w-4"
+                      />
+                      <span className={isDarkMode ? "text-gray-300" : "text-gray-600"}>Auto refresh nearby shops</span>
+                    </div>
+                  </div>
 
-              <div className="lg:col-span-2">
-                <div className={`w-full h-[70vh] rounded-2xl border overflow-hidden ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <div ref={mapContainerRef} className="w-full h-full" />
+                  <div className="mt-6 space-y-3">
+                    {nearbyLoading ? (
+                      <div className="text-sm text-gray-500">{t("nearby_loading")}</div>
+                    ) : nearbyShops.length === 0 ? (
+                      <div className="text-sm text-gray-500">{t("no_shops")}</div>
+                    ) : (
+                      nearbyShops.map((shop, idx) => (
+                        <div key={`${shop.id}-${idx}`} className={`p-3 rounded-xl border ${isDarkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-100 bg-gray-50'}`}>
+                          <div className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{shop.name}</div>
+                          <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{shop.address}</div>
+                          {shop.distance_km != null && (
+                            <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{t("distance")}: {shop.distance_km.toFixed(2)} km</div>
+                          )}
+                          <div className="mt-2 flex items-center gap-3 text-xs">
+                            <button
+                              onClick={() => handleRouteTo(shop)}
+                              className={`${isDarkMode ? 'text-blue-300 hover:text-blue-200' : 'text-blue-700 hover:text-blue-600'} hover:underline`}
+                            >
+                              {t("closest_route")}
+                            </button>
+                            <a
+                              href={`https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={`${isDarkMode ? "text-emerald-300 hover:text-emerald-200" : "text-emerald-700 hover:text-emerald-600"} hover:underline`}
+                            >
+                              Open in Google Maps
+                            </a>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="lg:col-span-2">
+                  <div className={`w-full h-[70vh] rounded-2xl border overflow-hidden ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <div ref={mapContainerRef} className="w-full h-full" />
+                  </div>
                 </div>
               </div>
-            </div>
-          </main>
+            </main>
+          </div>
         </div>
       </div>
     );
@@ -3014,59 +3039,24 @@ const applyChatResponse = (data, languageCode) => {
     return (
       <div className={`dashboard-shell ${isDarkMode ? "dash-dark" : ""}`}>
         <div className="dash-layout">
-          <aside className="dashboard-sidebar glass-card strong">
-            <div className="sidebar-header">
-              <div className="sidebar-logo">
-                <Pill size={22} />
-              </div>
-              <div>
-                <div className="sidebar-title">{t("app_name")}</div>
-                <div className="sidebar-subtitle">Smart patient dashboard</div>
-              </div>
-            </div>
-
-            <nav className="sidebar-nav">
-              <button className="nav-link active" onClick={() => goToView("dashboard")}>
-                <Home size={18} /> {t("dashboard")}
-              </button>
-              <button className="nav-link" onClick={() => goToView("chat")}>
-                <Bot size={18} /> {t("chat")}
-              </button>
-              <button className="nav-link" onClick={() => goToView("products")}>
-                <ShoppingCart size={18} /> {t("products")}
-              </button>
-              <button className="nav-link" onClick={() => goToView("orders")}>
-                <Package size={18} /> Orders
-              </button>
-              <button className="nav-link" onClick={() => goToView("book_appointment")}>
-                <Calendar size={18} /> Book Appointment
-              </button>
-            </nav>
-
-            <div className="sidebar-footer">
-              <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="pill-btn"
-              >
-                {isDarkMode ? t("light") : t("dark")}
-              </button>
-              <button
-                onClick={openManageProfile}
-                className="pill-btn primary"
-              >
-                Manage Profile
-              </button>
-            </div>
-          </aside>
+          {renderUserSidebar()}
 
           <div className="dash-main">
             <header className="dash-topbar glass-card strong">
-              <div>
-                <div className="topbar-kicker">{t("dashboard")}</div>
-                <div className="topbar-title">
-                  {t("welcome_back", { name: user?.name || t("pharmacist") })}
+              <div className="flex items-center gap-3">
+                <button 
+                  className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                >
+                  <Menu size={20} />
+                </button>
+                <div>
+                  <div className="topbar-kicker">{t("dashboard")}</div>
+                  <div className="topbar-title">
+                    {t("welcome_back", { name: user?.name || t("pharmacist") })}
+                  </div>
+                  <div className="topbar-sub">{t("dashboard_subtitle")}</div>
                 </div>
-                <div className="topbar-sub">{t("dashboard_subtitle")}</div>
               </div>
               <div className="topbar-actions">
                 <button
@@ -3286,48 +3276,22 @@ const applyChatResponse = (data, languageCode) => {
     return (
       <div className={`dashboard-shell ${isDarkMode ? "dash-dark" : ""}`}>
         <div className="dash-layout">
-          <aside className="dashboard-sidebar glass-card strong">
-            <div className="sidebar-header">
-              <div className="sidebar-logo">
-                <Pill size={22} />
-              </div>
-              <div>
-                <div className="sidebar-title">{t("app_name")}</div>
-                <div className="sidebar-subtitle">Smart patient dashboard</div>
-              </div>
-            </div>
-
-            <nav className="sidebar-nav">
-              <button className="nav-link" onClick={() => goToView("dashboard")}>
-                <Home size={18} /> {t("dashboard")}
-              </button>
-              <button className="nav-link active" onClick={() => goToView("orders")}>
-                <Package size={18} /> Orders
-              </button>
-              <button className="nav-link" onClick={() => goToView("products")}>
-                <ShoppingCart size={18} /> {t("products")}
-              </button>
-              <button className="nav-link" onClick={() => goToView("chat")}>
-                <Pill size={18} /> {t("chat")}
-              </button>
-            </nav>
-
-            <div className="sidebar-footer">
-              <button onClick={() => setIsDarkMode(!isDarkMode)} className="pill-btn">
-                {isDarkMode ? t("light") : t("dark")}
-              </button>
-              <button onClick={openManageProfile} className="pill-btn primary">
-                Manage Profile
-              </button>
-            </div>
-          </aside>
+          {renderUserSidebar()}
 
           <div className="dash-main">
             <header className="dash-topbar glass-card strong">
-              <div>
-                <div className="topbar-kicker">Orders</div>
-                <div className="topbar-title">Live Order List</div>
-                <div className="topbar-sub">Track every order in real-time.</div>
+              <div className="flex items-center gap-3">
+                <button 
+                  className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                >
+                  <Menu size={20} />
+                </button>
+                <div>
+                  <div className="topbar-kicker">Orders</div>
+                  <div className="topbar-title">Live Order List</div>
+                  <div className="topbar-sub">Track every order in real-time.</div>
+                </div>
               </div>
               <div className="topbar-actions">
                 <button className="pill-btn" onClick={() => goToView("history")}>
@@ -3407,54 +3371,22 @@ const applyChatResponse = (data, languageCode) => {
     return (
       <div className={`dashboard-shell ${isDarkMode ? "dash-dark" : ""}`}>
         <div className="dash-layout">
-          <aside className="dashboard-sidebar glass-card strong">
-            <div className="sidebar-header">
-              <div className="sidebar-logo">
-                <Pill size={22} />
-              </div>
-              <div>
-                <div className="sidebar-title">{t("app_name")}</div>
-                <div className="sidebar-subtitle">Smart patient dashboard</div>
-              </div>
-            </div>
-
-            <nav className="sidebar-nav">
-              <button className={`nav-link ${view === 'dashboard' ? 'active' : ''}`} onClick={() => goToView("dashboard")}>
-                <Home size={18} /> {t("dashboard")}
-              </button>
-              <button className={`nav-link ${view === 'chat' ? 'active' : ''}`} onClick={() => goToView("chat")}>
-                <Bot size={18} /> {t("chat")}
-              </button>
-              <button className={`nav-link ${view === 'products' ? 'active' : ''}`} onClick={() => goToView("products")}>
-                <ShoppingCart size={18} /> {t("products")}
-              </button>
-              <button className={`nav-link ${view === 'orders' ? 'active' : ''}`} onClick={() => goToView("orders")}>
-                <Package size={18} /> Orders
-              </button>
-            </nav>
-
-            <div className="sidebar-footer">
-              <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="pill-btn"
-              >
-                {isDarkMode ? t("light") : t("dark")}
-              </button>
-              <button
-                onClick={openManageProfile}
-                className="pill-btn primary"
-              >
-                Manage Profile
-              </button>
-            </div>
-          </aside>
+          {renderUserSidebar()}
 
           <div className="dash-main">
             <header className="dash-topbar glass-card strong">
-              <div>
-                <div className="topbar-kicker">{t("products")}</div>
-                <div className="topbar-title">{t("shop_products")}</div>
-                <div className="topbar-sub">{t("shop_subtitle")}</div>
+              <div className="flex items-center gap-3">
+                <button 
+                  className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                >
+                  <Menu size={20} />
+                </button>
+                <div>
+                  <div className="topbar-kicker">{t("products")}</div>
+                  <div className="topbar-title">{t("shop_products")}</div>
+                  <div className="topbar-sub">{t("shop_subtitle")}</div>
+                </div>
               </div>
               <div className="topbar-actions">
                 <input
@@ -3528,71 +3460,29 @@ const applyChatResponse = (data, languageCode) => {
   // ==========================================
   if (view === "history") {
     const historyView = (
-      <div className={`flex h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-[#F8FAFC]'} transition`}>
-        {/* LEFT SIDEBAR */}
-        <aside className={`w-64 ${isDarkMode ? 'bg-teal-700' : 'bg-teal-600'} text-white flex flex-col shadow-xl transition`}>
-          <div className={`p-6 border-b ${isDarkMode ? 'border-teal-600' : 'border-teal-500'} flex items-center gap-3`}>
-            <Pill size={28} className="text-teal-200" />
-            <h1 className="text-2xl font-bold tracking-wide">{t("app_name")}</h1>
-          </div>
-          <nav className="flex-1 p-4 space-y-2">
-            <button 
-              onClick={() => goToView("dashboard")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${view === 'dashboard' ? `${isDarkMode ? 'bg-teal-800 shadow-inner' : 'bg-teal-500 shadow-inner'}` : 'hover:bg-teal-600'}`}
-            >
-              <Home size={20} className={view === 'dashboard' ? 'text-white' : 'text-teal-200'} /> {t("dashboard")}
-            </button>
-            <button 
-              onClick={() => goToView("chat")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${view === 'chat' ? `${isDarkMode ? 'bg-teal-800 shadow-inner' : 'bg-teal-500 shadow-inner'}` : 'hover:bg-teal-600'}`}
-            >
-              <Pill size={20} className={view === 'chat' ? 'text-white' : 'text-teal-200'} /> {t("chat")}
-            </button>
-            <button 
-              onClick={() => goToView("products")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${view === 'products' ? `${isDarkMode ? 'bg-teal-800 shadow-inner' : 'bg-teal-500 shadow-inner'}` : 'hover:bg-teal-600'}`}
-            >
-              <ShoppingCart size={20} className={view === 'products' ? 'text-white' : 'text-teal-200'} /> {t("products")}
-            </button>
-            <button 
-              onClick={() => goToView("orders")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition ${view === 'orders' ? `${isDarkMode ? 'bg-teal-800 shadow-inner' : 'bg-teal-500 shadow-inner'}` : 'hover:bg-teal-600'}`}
-            >
-              <Package size={20} className={view === 'orders' ? 'text-white' : 'text-teal-200'} /> Orders
-            </button>
-          </nav>
+      <div className={`dashboard-shell ${isDarkMode ? "dash-dark" : ""}`}>
+        <div className="dash-layout">
+          {renderUserSidebar()}
 
-          {/* Theme Toggle */}
-          <div className={`p-4 border-t ${isDarkMode ? 'border-teal-600' : 'border-teal-500'} space-y-3`}>
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold transition ${isDarkMode ? 'bg-teal-800 hover:bg-teal-700 text-yellow-300' : 'bg-teal-500 hover:bg-teal-600 text-white'}`}
-            >
-              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-              {isDarkMode ? t("light") : t("dark")}
-            </button>
-            <button
-              onClick={openManageProfile}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition"
-            >
-            <User size={18} /> {t("profile")}
-            </button>
-          </div>
-        </aside>
-
-        {/* MAIN CONTENT */}
-        <div className={`flex-1 flex flex-col h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-[#F8FAFC]'} transition`}>
-          {/* TOP HEADER */}
-          <header className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-8 py-6 shadow-sm transition`}>
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>📦 {t("history_title")}</h2>
-                <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{t("history_subtitle")}</p>
+          {/* MAIN CONTENT */}
+          <div className="dash-main">
+            <header className="dash-topbar glass-card strong">
+              <div className="flex items-center gap-3">
+                <button 
+                  className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                >
+                  <Menu size={20} />
+                </button>
+                <div>
+                  <div className="topbar-kicker">Orders</div>
+                  <div className="topbar-title">📦 {t("history_title")}</div>
+                  <div className="topbar-sub">{t("history_subtitle")}</div>
+                </div>
               </div>
-            </div>
-          </header>
+            </header>
 
-          <main className={`flex-1 overflow-y-auto px-6 py-8 ${isDarkMode ? 'bg-gray-900' : 'bg-[#F8FAFC]'} transition`}>
+            <main className="glass-card chat-main p-4 overflow-y-auto">
             <div className="max-w-4xl mx-auto">
               {loadingHistory ? (
                 <div className="flex justify-center py-20">
@@ -3707,6 +3597,7 @@ const applyChatResponse = (data, languageCode) => {
           </main>
         </div>
       </div>
+      </div>
     );
     
     return (
@@ -3778,51 +3669,22 @@ const applyChatResponse = (data, languageCode) => {
     return (
       <div className={`dashboard-shell ${isDarkMode ? "dash-dark" : ""}`}>
         <div className="dash-layout">
-          <aside className="dashboard-sidebar glass-card strong">
-            <div className="sidebar-header">
-              <div className="sidebar-logo">
-                <Pill size={22} />
-              </div>
-              <div>
-                <div className="sidebar-title">{t("app_name")}</div>
-                <div className="sidebar-subtitle">Smart patient dashboard</div>
-              </div>
-            </div>
-
-            <nav className="sidebar-nav">
-              <button className={`nav-link ${view === 'dashboard' ? 'active' : ''}`} onClick={() => goToView("dashboard")}>
-                <Home size={18} /> {t("dashboard")}
-              </button>
-              <button className={`nav-link ${view === 'chat' ? 'active' : ''}`} onClick={() => goToView("chat")}>
-                <Bot size={18} /> {t("chat")}
-              </button>
-              <button className={`nav-link ${view === 'report_chat' ? 'active' : ''}`} onClick={() => goToView("report_chat")}>
-                <FileText size={18} /> {t("report_analysis")}
-              </button>
-              <button className={`nav-link ${view === 'products' ? 'active' : ''}`} onClick={() => goToView("products")}>
-                <ShoppingCart size={18} /> {t("products")}
-              </button>
-              <button className={`nav-link ${view === 'orders' ? 'active' : ''}`} onClick={() => goToView("orders")}>
-                <Package size={18} /> Orders
-              </button>
-            </nav>
-
-            <div className="sidebar-footer">
-              <button onClick={() => setIsDarkMode(!isDarkMode)} className="pill-btn">
-                {isDarkMode ? t("light") : t("dark")}
-              </button>
-              <button onClick={openManageProfile} className="pill-btn primary">
-                Manage Profile
-              </button>
-            </div>
-          </aside>
+          {renderUserSidebar()}
 
           <div className="dash-main">
             <header className="dash-topbar chat-topbar glass-card strong">
-              <div>
-                <div className="topbar-kicker">{t("report_analysis")}</div>
-                <div className="topbar-title">{t("report_chat_title")}</div>
-                <div className="topbar-sub">{t("report_chat_subtitle")}</div>
+              <div className="flex items-center gap-3">
+                <button 
+                  className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                >
+                  <Menu size={20} />
+                </button>
+                <div>
+                  <div className="topbar-kicker">{t("report_analysis")}</div>
+                  <div className="topbar-title">{t("report_chat_title")}</div>
+                  <div className="topbar-sub">{t("report_chat_subtitle")}</div>
+                </div>
               </div>
               <div className="topbar-actions">
                 <button
@@ -3945,57 +3807,22 @@ const applyChatResponse = (data, languageCode) => {
   return (
     <div className={`dashboard-shell ${isDarkMode ? "dash-dark" : ""}`}>
       <div className="dash-layout">
-        <aside className="dashboard-sidebar glass-card strong">
-          <div className="sidebar-header">
-            <div className="sidebar-logo">
-              <Pill size={22} />
-            </div>
-            <div>
-              <div className="sidebar-title">{t("app_name")}</div>
-              <div className="sidebar-subtitle">Smart patient dashboard</div>
-            </div>
-          </div>
-
-          <nav className="sidebar-nav">
-            <button className={`nav-link ${view === 'dashboard' ? 'active' : ''}`} onClick={() => goToView("dashboard")}>
-              <Home size={18} /> {t("dashboard")}
-            </button>
-            <button className={`nav-link ${view === 'chat' ? 'active' : ''}`} onClick={() => goToView("chat")}>
-              <Bot size={18} /> {t("chat")}
-            </button>
-            <button className={`nav-link ${view === 'report_chat' ? 'active' : ''}`} onClick={() => goToView("report_chat")}>
-              <FileText size={18} /> {t("report_analysis")}
-            </button>
-            <button className={`nav-link ${view === 'products' ? 'active' : ''}`} onClick={() => goToView("products")}>
-              <ShoppingCart size={18} /> {t("products")}
-            </button>
-            <button className={`nav-link ${view === 'orders' ? 'active' : ''}`} onClick={() => goToView("orders")}>
-              <Package size={18} /> Orders
-            </button>
-          </nav>
-
-          <div className="sidebar-footer">
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="pill-btn"
-            >
-              {isDarkMode ? t("light") : t("dark")}
-            </button>
-            <button
-              onClick={openManageProfile}
-              className="pill-btn primary"
-            >
-              Manage Profile
-            </button>
-          </div>
-        </aside>
+        {renderUserSidebar()}
 
         <div className="dash-main">
           <header className="dash-topbar chat-topbar glass-card strong">
-            <div>
-              <div className="topbar-kicker">{t("chat")}</div>
-              <div className="topbar-title">{t("chat_title")}</div>
-              <div className="topbar-sub">{t("chat_subtitle")}</div>
+            <div className="flex items-center gap-3">
+              <button 
+                className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition"
+                onClick={() => setIsMobileMenuOpen(true)}
+              >
+                <Menu size={20} />
+              </button>
+              <div>
+                <div className="topbar-kicker">{t("chat")}</div>
+                <div className="topbar-title">{t("chat_title")}</div>
+                <div className="topbar-sub">{t("chat_subtitle")}</div>
+              </div>
             </div>
             <div className="topbar-actions">
               <button className="pill-btn" onClick={() => setMessages([messages[0]])}>
