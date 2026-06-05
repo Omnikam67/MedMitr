@@ -563,7 +563,9 @@
   .login-container {
     grid-template-columns: 1fr;
     min-height: auto;
-    max-height: 100vh;
+    max-height: none;
+    height: auto;
+    overflow: visible;
   }
 
   .login-left-panel {
@@ -572,10 +574,14 @@
 
   .login-right-panel {
     padding: 40px 30px;
+    max-height: none;
+    overflow: visible;
   }
 
   .login-page {
-    padding: 20px;
+    padding: 20px 10px;
+    overflow-y: auto;
+    align-items: flex-start;
   }
 }
 
@@ -621,19 +627,28 @@
 
 @media (max-width: 480px) {
   .login-container {
-    border-radius: 0;
-    height: 100vh;
+    border-radius: 16px;
+    height: auto;
     width: 100%;
     max-width: 100%;
+    margin: 0 auto;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   .login-page {
-    padding: 0;
+    padding: 12px;
+    overflow-y: auto;
+    align-items: flex-start;
   }
 
   .login-right-panel {
     padding: 25px 16px;
     justify-content: flex-start;
+    height: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   .login-role-selector {
