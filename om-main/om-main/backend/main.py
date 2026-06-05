@@ -79,7 +79,7 @@ app.add_middleware(
 from socketio import ASGIApp
 sio = AsyncServer(
     async_mode="asgi",
-    cors_allowed_origins=_allowed_origins(),
+    cors_allowed_origins="*",
     ping_timeout=60,
     ping_interval=25,
     allow_upgrades=True,
