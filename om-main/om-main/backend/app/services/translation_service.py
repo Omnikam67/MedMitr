@@ -73,6 +73,10 @@ def translate_texts(texts: list[str], target: str = "en") -> list[str]:
         cache_key = (target, t)
         if cache_key in _CACHE:
             continue
+        # If target is English and the text is already plain ASCII, bypass translation API
+        if target == "en" and all(ord(c) < 128 for c in t):
+            _CACHE[cache_key] = t
+            continue
         if t in seen:
             continue
         seen.add(t)
@@ -85,7 +89,7 @@ def translate_texts(texts: list[str], target: str = "en") -> list[str]:
                 url,
                 params={"key": key},
                 json={"q": missing, "target": target, "format": "text"},
-                timeout=15.0,
+                timeout=2.0,
             )
             data = resp.json()
             translations = data.get("data", {}).get("translations", []) or []
